@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DART (alpha)</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b5fff">
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+
+  /* Tabs */
+  .tabbar {
+    position: sticky; top: 0; z-index: 10;
+    background: #f9f9f9; border-bottom: 2px solid #ccc; margin-bottom: 12px;
+    display: flex; gap: 6px; flex-wrap: wrap; padding-top: 4px;
+  }
+  .tabbar button {
+    padding: 10px 16px; cursor: pointer; border: 1px solid #ccc;
+    border-bottom: none; border-radius: 6px 6px 0 0; background: #f0f0f0;
+  }
+  .tabbar button.active { background: #fff; font-weight: bold; }
+  .tab-content { display: none; padding: 12px; border: 1px solid #ccc; border-radius: 0 6px 6px 6px; }
+  .tab-content.active { display: block; }
+
+  /* Help tab gallery */
+  .help-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .help-grid a { display: block; }
+  .help-grid img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+  /* General UI */
+  label { display: inline-block; min-width: 160px; margin: 6px 0; }
+  input[type="text"], input[type="number"] { width: 160px; padding: 6px; }
+  button.action,
+a.action {
+  display: inline-block;
+  padding: 10px 16px;
+  margin: 6px 6px 0 0;
+  cursor: pointer;
+  background: #007bff;
+  color: #fff;
+  text-decoration: none;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  text-align: center;
+}
+
+button.action:hover,
+a.action:hover {
+  background: #005ec4;
+}
+
+  .result { margin-top: 10px; font-weight: bold; }
+  .ok { color: black; }
+  .warning-orange { color: orange; }
+  .warning-red { color: red; }
+  .summary { margin-top: 16px; padding: 10px; border-top: 2px solid #ccc; }
+  .green { color: green; font-weight: bold; }
+  .red { color: red; font-weight: bold; }
+  #modDescriptions ul { padding-left: 20px; }
+  #modDescriptions li { margin-bottom: 5px; }
+
+  /* Quick links */
+  .link-buttons a {
+    display: inline-block;
+    margin: 8px 8px 0 0;
+    padding: 12px 20px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+  .link-buttons a:hover { background: #0056b3; }
+</style>
+</head>
+<body>
+<h2>Defect Assessment and Reporting Tool</h2>
+<h3>DART</h3>
+
+<!-- Tab Buttons -->
+<div class="tabbar">
+  <button type="button" class="tablink active" onclick="openTab(event, 'home')">Home</button>
+  <button type="button" class="tablink" onclick="openTab(event, 'measurements')">Vehicle Measurements</button>
+  <button type="button" class="tablink" onclick="openTab(event, 'inspection')">Inspection</button>
+  <button type="button" class="tablink" onclick="openTab(event, 'photos')">Vehicle Photos</button>
+  <button type="button" class="tablink" onclick="openTab(event, 'results')">Results</button>
+  <button type="button" class="tablink" onclick="openTab(event, 'help')">Help</button>
+</div>
+
+<!-- Home Tab -->
+<div id="home" class="tab-content active">
+
+
+  <!-- Quick Links -->
+  <h3>Quick Links</h3>
+  <div class="link-buttons">
+    <a href="https://www.rover.infrastructure.gov.au/RAVPublicSearch/" target="_blank">RAV Search (Post 2021)</a>
+    <a href="https://myrta.com/rvd/searchRVD.do?submitValue=start" target="_blank">RVD (1999–2001)</a>
+    <a href="https://www.myrta.com/myrta/applications/rvd/rvd-pre1999/index.htm" target="_blank">RVD (Pre 1999)</a>
+  </div>
+
+
+
+
+  <h3>Vehicle Details</h3>
+  <p><em>Enter the details of the inspected vehicle.</em></p>
+
+  <label>Registration:</label>
+  <input type="text" id="rego" placeholder="e.g. SIK4X4"><br>
+
+  <label>Make:</label>
+  <input type="text" id="make" placeholder="e.g. Toyota"><br>
+
+  <label>Model:</label>
+  <input type="text" id="model" placeholder="e.g. Yaris"><br>
+
+  <label>Year:</label>
+  <input type="number" id="year" placeholder="e.g. 2023"><br>
+
+  <label>Approval Number:</label>
+  <input type="text" id="approval" placeholder="e.g. 12345"><br>
+
+  <!-- Engineering Mod Codes -->
+  <h3>Engineering Mod Codes</h3>
+  <p><em>Enter mod codes if applicable (e.g. LM1, LS9). Separate multiple codes with commas.</em></p>
+  <input type="text" id="modCodes" placeholder="e.g. LM1, LS9, LS10" style="width: 320px;">
+  <button type="button" id="modCodeButton" class="action">Check Codes</button>
+  <div id="modDescriptions" class="result"></div>
+
+  <!-- RVD Measurements (Stock) -->
+  <h3>Road Vehicle Descriptor (RVD) Measurements</h3>
+  <p><em>Enter RVD measurements collected from the links provided below</em></p>
+
+  <h4>Suspension</h4>
+  <p><em>Measurements taken from wheel center to lower guard</em></p>
+
+  <label>Front (stock/RVD):</label>
+  <input type="number" id="suspensionFront" placeholder="e.g. 540"><br>
+
+  <label>Rear (stock/RVD):</label>
+  <input type="number" id="suspensionRear" placeholder="e.g. 550"><br>
+
+  <h4>Wheel Track</h4>
+  <p><em>Measurement centre of tyre to centre of tyre</em></p>
+
+  <label>Front:</label>
+  <input type="number" id="trackFront" placeholder="e.g. 1620"><br>
+
+  <label>Rear:</label>
+  <input type="number" id="trackRear" placeholder="e.g. 1620"><br>
+
+  <h4>Tyre Placard</h4>
+<label>Tyre Size:</label>
+<input type="number" id="tyreWidth" placeholder="265"> /
+<input type="number" id="tyreAspect" placeholder="75"> R
+<input type="number" id="tyreRim" placeholder="16"><br>
+
+<!-- Save Details -->
+<button type="button" class="action" onclick="saveVehicleDetails()">Save Details</button>
+<p style="margin-top:8px; font-size:14px; color:#555;">
+    This application was developed by TI P Boreham.  
+    Enquiries and feedback: <a href="mailto:patrick.j.boreham@tmr.qld.gov.au">patrick.j.boreham@tmr.qld.gov.au</a>
+  </p>
+<div id="vehicleSummary" class="summary"></div>
+
+
+</div>
+
+<!-- Vehicle Measurements Tab -->
+<div id="measurements" class="tab-content">
+  <p><em>Enter the measured (current) values you took on the vehicle today.</em></p>
+
+  <!-- Suspension (measured) -->
+  <div class="section">
+    <h3>Suspension</h3>
+    <p><em>Wheel centre → lower guard (mm)</em></p>
+
+    <label>Front (measured):</label>
+    <input type="number" id="measFront" placeholder="e.g. 560"> mm<br>
+
+    <label>Rear (measured):</label>
+    <input type="number" id="measRear" placeholder="e.g. 560"> mm
+  </div>
+
+  <!-- Wheel Track (measured) -->
+  <div class="section" style="margin-top:14px;">
+    <h3>Wheel Track</h3>
+    <p><em>Centre of tyre to centre of tyre (mm)</em></p>
+
+    <label>Front (measured):</label>
+    <input type="number" id="measTrackFront" placeholder="e.g. 1660"> mm<br>
+
+    <label>Rear (measured):</label>
+    <input type="number" id="measTrackRear" placeholder="e.g. 1660"> mm
+  </div>
+
+  <!-- Tyres (measured tab, separate from Home) -->
+  <div class="section" style="margin-top:14px;">
+    <h3>Tyres</h3>
+    <p><em>Same input style as Home (placard). Optional for your report.</em></p>
+
+    <label>Tyre Size:</label>
+    <input type="number" id="m_tyreWidth" placeholder="265"> /
+    <input type="number" id="m_tyreAspect" placeholder="75"> R
+    <input type="number" id="m_tyreRim" placeholder="16">
+    <button type="button" class="action" onclick="toggleTyreUnitsMeasure()">mm/in</button>
+    <div id="m_tyreUnitLabel" class="result"></div>
+  </div>
+
+  <!-- Action -->
+  <button type="button" class="action" onclick="compileResults()">Compile Results</button>
+  <p style="margin-top:6px;"><em>This will read the RVD “stock” numbers you entered on the Home tab (Suspension/Track) and compare with these measured values.</em></p>
+</div>
+
+<!-- Inspection Tab -->
+<div id="inspection" class="tab-content">
+  <h3>Inspection</h3>
+  <p><em>Questions are optional.</em></p>
+
+  <div class="section">
+    <h4>Sway bar</h4>
+    <p>Are any sway bar components broken, loose, unduly worn, disconnected, or removed?</p>
+
+    <div>
+      <button type="button" class="action" onclick="answerSwayBar(true)">Yes</button>
+      <button type="button" class="action" onclick="answerSwayBar(false)">No</button>
+    </div>
+
+    <!-- Appears when you answer -->
+    <div id="swayBarInfo" class="result"></div>
+  </div>
+</div>
+
+<!-- Vehicle Photos Tab -->
+<div id="photos" class="tab-content">
+  <h3>Upload Vehicle Photos</h3>
+  <p><em>Attach images of the inspected 4x4 vehicle (optional).</em></p>
+  <input type="file" accept="image/*" capture="environment">
+</div>
+
+<!-- Results Tab -->
+<div id="results" class="tab-content">
+  <h3>Results</h3>
+    <!-- Saved Vehicle Summary (from Home) -->
+  <div id="resultsVehicleSummary" class="summary"></div>
+  <div id="frontResult" class="result"></div>
+  <div id="rearResult" class="result"></div>
+  <div id="summary" class="summary"></div>
+
+  <!-- Wheel Track warning (only shows if >50mm) -->
+  <div id="trackAlert" class="result"></div>
+
+  <!-- Inspection findings -->
+  <div id="inspectionResults" class="result"></div>
+
+  <!-- Tyre Diameter warning (only shows if >50mm increase) -->
+  <div id="tyreDiaAlert" class="result"></div>
+
+</div>
+
+<!-- Help Tab -->
+<div id="help" class="tab-content">
+  <h3>Help</h3>
+  <p><em>Tap a photo to view it full size in a new tab.</em></p>
+
+ <div class="help-grid">
+  <a href="Help/helpphoto1.jpg" target="_blank" rel="noopener" class="action">Tyre Diameter</a>
+  <a href="Help/helpphoto2.jpg" target="_blank" rel="noopener" class="action">Sway Bar</a>
+  <a href="Help/helpphoto3.jpg" target="_blank" rel="noopener" class="action">Wheel Track</a>
+  <a href="Help/helpphoto4.jpg" target="_blank" rel="noopener" class="action">Suspension Height</a>
+</div>
+
+
+
+
+  <div class="summary" style="margin-top:16px;">
+    <p><strong>Tip:</strong> Right-click a tab name and choose “Open link in new tab” if you want to keep Help open while you enter data.</p>
+  </div>
+</div>
+
+<script>
+/* ---------------- Tabs ---------------- */
+function openTab(evt, tabName) {
+  const contents = document.getElementsByClassName("tab-content");
+  for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
+
+  const links = document.getElementsByClassName("tablink");
+  for (let i = 0; i < links.length; i++) links[i].classList.remove("active");
+
+  const tab = document.getElementById(tabName);
+  if (tab) tab.classList.add("active");
+
+  if (evt && evt.currentTarget) {
+    evt.currentTarget.classList.add("active");
+  } else {
+    const btn = Array.from(document.getElementsByClassName("tablink"))
+      .find(b => (b.getAttribute("onclick") || "").includes("'" + tabName + "'"));
+    if (btn) btn.classList.add("active");
+  }
+}
+
+/* ---------------- Mod Codes Lookup ---------------- */
+const modCodeDescriptions = {
+  LA1:"Equivalent engine installation",LA2:"Performance engine installation",LA3:"Supercharger and turbo charger installation",LA4:"Engine modifications",
+  LB1:"Transmission substitution",LB2:"Rear axle substitution",
+  LC1:"Dual-controls for driver trainer vehicles (design)",LC2:"Dual-controls for driver trainer vehicles (modification)",LC3:"Vehicle controls for persons with a disability (design)",LC4:"Vehicle controls for persons with a disability (modification)",
+  LG1:"Brake system conversion (design)",LG2:"Brake system conversion section)",LG3:"Relocation of air brake components",LG4:"Non-Standard brake system certification",LG5:"Fitting of Auxiliary and Endurance Brakes",LG6:"Fitting of air operated accessories",
+  LH1:"Roof conversion (design)",LH2:"Roof conversion",LH3:"Modified wheelbase conversion (design)",LH4:"Modified wheelbase conversion",LH5:"Vehicle construction (design)",LH6:"Vehicle construction",LH7:"Body/chassis variants conversion",LH9:"Street rod certification (concessional)",LH10:"Street rod certification (full)",LH11:"Campervan, motorhome conversion section",LH13:"Chassis Alteration (Design Certification)",LH14:"Chassis Alteration (Modification Certification)",
+  LK1:"Seat and seatbelt installation/removal",LK2:"Seat and anchorage certification",LK3:"Wheelchair Accessibility",LK6:"Child restraint anchorage installation",LK8:"Construction and installation of one-off roll-bars and roll-cages by individuals",LK9:"Design and manufacture of commercial aftermarket roll-bars, roll-cages and other types of roll-over protection systems (ROPS)",LK10:"Installation of aftermarket roll-bars, roll-cages and ROPS section",
+  LL1:"Modifications to motorcycle (LC) to motor tricycle (LEM1)",
+  LM1:"Fuel tank installation section",
+  LO1:"ADR compliance",LO2:"ICV passenger cars and derivatives",LO3:"Personally imported vehicle compliance",LO4:"ICV LEM1 tricycle",LO5:"ICV LEP1 tricycle",LO7:"ICV motorcycle",
+  LR1:"Installation of Vehicle Mounted Lifting System",
+  LS1:"LHD vehicle steering conversion (design)",LS2:"LHD vehicle steering conversion",LS3:"Front suspension and steering modification (design)",LS4:"Front suspension and steering modification",LS5:"Rear suspension modification (design)",LS6:"Rear suspension modification",LS9:"High lift – up to 150mm (design certification)",LS10:"High lift – up to 150mm (modification certification)",LS11:"Gross vehicle mass re-rating",LS12:"Light trailer modifications",LS14:"Re-rating of Aggregate Trailer Mass (ATM)/Gross Trailer Mass (GTM) of a light trailer to manufacturer's specifications)",LS15:"Gross vehicle mass rating of light vehicles",LS16:"Gross combination mass re-rating",
+  LT1:"Beam and torsion tests",LT2:"Lane change manoeuvre test",LT3:"Exhaust emissions – IM240 test",LT4:"Noise test",
+  LV1:"Installation of electric drives in motor vehicles",
+  LX1:"Modification of light vehicles to TMR individual approval",
+  A1:"Engine substitution",A2:"Air cleaner substitution or additional fitment",A3:"Turbo charger installation",A4:"Exhaust system alteration",A5:"Road speed limiter installation",
+  B1:"Transmission substitution of additional fitment",
+  C1:"Tail shaft alterations",
+  D1:"Rear axle installation",D2:"Differential substitution",D3:"Fitting of non-standard rear wheel components",
+  E1:"Front axle installation",E2:"Steering alteration",E3:"Fitting of non-standard front wheel components",
+  F1:"Suspension substitution",F2:"Trailer suspension modifications",
+  G1:"Relocation of air brake components",G2:"Installation of trailer braking controls",G3:"Trailer brake system upgrade",G4:"Motor vehicle brake system certification",G5:"Fitting of auxiliary and endurance brakes",G6:"Fitting of air operated accessories",G7:"Brake system substitution/wheelbase extension",G8:"Trailer brake system upgrade (design)",
+  H1:"Wheelbase extension outside OEM options",H2:"Wheelbase reduction outside OEM options",H3:"Wheelbase alterations within OEM",H4:"Chassis alteration",H5:"Trailer chassis modifications",
+  J1:"Body mounting",J2:"Truck-bus body fitting",J3:"Fitting of roll-over or falling object protection system",J4:"Tipper bodies (design)",
+  K1:"Seating capacity alteration, seat, seatbelt and anchorage alteration",K2:"Certification of seat and seatbelt anchorage",K3:"Cabin conversions",K5:"Installation of wheelchair occupant restraint system",K6:"Child restraint anchorage installation",
+  M1:"Fuel system alterations",
+  P1:"Towbar and coupling installation other than fifth wheels and kingpins",P2:"Fifth wheel and kingpin installation",
+  R1:"Installation of vehicle mounted lifting systems",R2:"Wheelchair loader installation",
+  S1:"GVM/GCM re-rating (to S2 or S3 approved design or within manufacturer's specifications)",S2:"GVM re-rating (design)",S3:"GCM re-rating (design)",S4:"GVM rating (rigid omnibus)",S5:"GVM rating (articulated omnibus)",S6:"Omnibus licencing evaluation",S7:"ATM/GTM re-rating",S8:"Motor vehicle road train rating",S9:"Prime mover B-double rating",S10:"Concessional livestock loading",S11:"Road train trailer rating",S12:"ATM/GTM re-rating (design)",S13:"Bus life vehicle rating",
+  T1:"Tow trucks (construction)",T2:"Tow trucks (design)"
+};
+
+function showModDescriptions() {
+  const input = document.getElementById("modCodes").value;
+  const codes = input.split(",").map(code => code.trim().toUpperCase()).filter(Boolean);
+  let output = "";
+  if (codes.length === 0) {
+    output = "Please enter at least one mod code.";
+  } else {
+    output = "<ul>";
+    codes.forEach(code => {
+      if (modCodeDescriptions[code]) {
+        output += `<li><strong>${code}</strong>: ${modCodeDescriptions[code]}</li>`;
+      } else {
+        output += `<li><strong>${code}</strong>: <span style="color:red;">Unknown code</span></li>`;
+      }
+    });
+    output += "</ul>";
+  }
+  document.getElementById("modDescriptions").innerHTML = output;
+}
+const modBtn = document.getElementById("modCodeButton");
+if (modBtn) modBtn.addEventListener("click", showModDescriptions);
+
+/* ---------------- Tyre unit toggle (Measurements only) ---------------- */
+let measureTyreInMM = true;
+function toggleTyreUnitsMeasure() {
+  const width = parseFloat(document.getElementById("m_tyreWidth").value);
+  const aspect = parseFloat(document.getElementById("m_tyreAspect").value);
+  const rim = parseFloat(document.getElementById("m_tyreRim").value);
+  const tyreLabel = document.getElementById("m_tyreUnitLabel");
+  if (isNaN(width) || isNaN(aspect) || isNaN(rim)) { tyreLabel.innerText = "Enter full size first"; return; }
+  if (measureTyreInMM) {
+    const widthIn = (width / 25.4).toFixed(2);
+    const sidewallIn = (width * aspect / 100 / 25.4);
+    const overallDia = (2 * sidewallIn + rim).toFixed(0);
+    tyreLabel.innerText = `${overallDia}x${widthIn}R${rim}`;
+  } else {
+    tyreLabel.innerText = `${width}/${aspect}R${rim}`;
+  }
+  measureTyreInMM = !measureTyreInMM;
+}
+
+/* ---------------- Save Vehicle Details ---------------- */
+function saveVehicleDetails() {
+  // Basic details
+  const rego     = document.getElementById("rego").value.trim();
+  const make     = document.getElementById("make").value.trim();
+  const model    = document.getElementById("model").value.trim();
+  const year     = document.getElementById("year").value.trim();
+  const approval = document.getElementById("approval").value.trim();
+
+  // Suspension & Track (for Home summary only)
+  const suspensionFront = document.getElementById("suspensionFront").value.trim();
+  const suspensionRear  = document.getElementById("suspensionRear").value.trim();
+  const trackFront      = document.getElementById("trackFront").value.trim();
+  const trackRear       = document.getElementById("trackRear").value.trim();
+
+  // Tyres (for Home summary only)
+  const tyreWidth  = document.getElementById("tyreWidth").value.trim();
+  const tyreAspect = document.getElementById("tyreAspect").value.trim();
+  const tyreRim    = document.getElementById("tyreRim").value.trim();
+  const tyrePlacard = (tyreWidth && tyreAspect && tyreRim) ? `${tyreWidth}/${tyreAspect}R${tyreRim}` : "-";
+
+  // Mod codes
+  const modCodesRaw = (document.getElementById("modCodes")?.value || "").trim();
+  const modCodes = modCodesRaw
+    ? modCodesRaw.split(",").map(c => c.trim().toUpperCase()).filter(Boolean)
+    : [];
+
+  // Validate required vehicle fields
+  if (!rego || !make || !model || !year || !approval) {
+    document.getElementById("vehicleSummary").innerHTML =
+      `<span style="color:red;">Please fill in all vehicle detail fields.</span>`;
+    return;
+  }
+
+  // Mod codes block
+  const modCodesSection = `
+    <h4 style="color:blue;">Engineering Mod Codes</h4>
+    ${
+      modCodes.length
+        ? `<ul>${
+            modCodes.map(code => {
+              const desc = (typeof modCodeDescriptions !== "undefined" && modCodeDescriptions[code])
+                ? modCodeDescriptions[code]
+                : `<span style="color:red;">Unknown code</span>`;
+              return `<li><strong>${code}</strong>: ${desc}</li>`;
+            }).join("")
+          }</ul>`
+        : `<p><em>No Codes Found</em></p>`
+    }
+  `;
+
+  const now = new Date();
+
+  // ---------------- Home tab (full) ----------------
+  const fullOutput = `
+    <h3>Vehicle Summary</h3>
+    <p><strong>Registration:</strong> ${rego}</p>
+    <p><strong>Make:</strong> ${make}</p>
+    <p><strong>Model:</strong> ${model}</p>
+    <p><strong>Year:</strong> ${year}</p>
+    <p><strong>Approval Number:</strong> ${approval}</p>
+
+    ${modCodesSection}
+
+    <h4 style="color:blue;">Suspension</h4>
+    <p><strong>Front:</strong> ${suspensionFront || "-"} mm</p>
+    <p><strong>Rear:</strong> ${suspensionRear || "-"} mm</p>
+    <p><strong>Track Front:</strong> ${trackFront || "-"} mm</p>
+    <p><strong>Track Rear:</strong> ${trackRear || "-"} mm</p>
+
+    <h4 style="color:blue;">Tyre Placard</h4>
+    <p>${tyrePlacard}</p>
+
+    <p><strong>Saved:</strong> ${now.toLocaleString()}</p>
+  `;
+  document.getElementById("vehicleSummary").innerHTML = fullOutput;
+
+  // ---------------- Results tab (trimmed) ----------------
+  const trimmedOutput = `
+    <h3>Vehicle Summary</h3>
+    <p><strong>Registration:</strong> ${rego}</p>
+    <p><strong>Make:</strong> ${make}</p>
+    <p><strong>Model:</strong> ${model}</p>
+    <p><strong>Year:</strong> ${year}</p>
+    <p><strong>Approval Number:</strong> ${approval}</p>
+
+    ${modCodesSection}
+
+    <p><strong>Saved:</strong> ${now.toLocaleString()}</p>
+  `;
+  const resSum = document.getElementById("resultsVehicleSummary");
+  if (resSum) resSum.innerHTML = trimmedOutput;
+}
+
+
+/* ---------------- Compile Results ---------------- */
+function compileResults(silent = false, stayHere = false) {
+  // Suspension (stock/home)
+  const stockFront = parseFloat(document.getElementById("suspensionFront").value);
+  const stockRear  = parseFloat(document.getElementById("suspensionRear").value);
+  // Suspension (measured)
+  const measuredFront = parseFloat(document.getElementById("measFront").value);
+  const measuredRear  = parseFloat(document.getElementById("measRear").value);
+
+  const haveStockSusp    = !(isNaN(stockFront) || isNaN(stockRear));
+  const haveMeasuredSusp = !(isNaN(measuredFront) || isNaN(measuredRear));
+
+  const frontDiv   = document.getElementById("frontResult");
+  const rearDiv    = document.getElementById("rearResult");
+  const summaryDiv = document.getElementById("summary");
+
+  // Suspension compare only when all four suspension values exist
+  if (haveStockSusp && haveMeasuredSusp) {
+    const frontMsg = checkLiftValues(stockFront, measuredFront);
+    const rearMsg  = checkLiftValues(stockRear,  measuredRear);
+
+    frontDiv.innerText = frontMsg.text; frontDiv.className = `result ${frontMsg.className}`;
+    rearDiv.innerText  = rearMsg.text;  rearDiv.className  = `result ${rearMsg.className}`;
+
+    const originalRelationship = stockFront - stockRear;
+    const currentRelationship  = measuredFront - measuredRear;
+
+    if (originalRelationship === currentRelationship) {
+      summaryDiv.innerHTML =
+        `<p>Front Lift: ${measuredFront - stockFront} mm | Rear Lift: ${measuredRear - stockRear} mm</p>` +
+        `<p>Original relationship: <span class="green">${originalRelationship} mm</span></p>` +
+        `<p>Current relationship: <span class="green">${currentRelationship} mm</span></p>` +
+        `<p>Front and rear suspension relationship maintained.</p>`;
+    } else {
+      summaryDiv.innerHTML =
+        `<p>Front Lift: ${measuredFront - stockFront} mm | Rear Lift: ${measuredRear - stockRear} mm</p>` +
+        `<p>Original relationship: <span class="green">${originalRelationship} mm</span></p>` +
+        `<p>Current relationship: <span class="red">${currentRelationship} mm</span></p>` +
+        `<p>Unequal lift: The original relationship between the front and rear suspension is ${originalRelationship} mm and must not be changed. ` +
+        `Currently the relationship is ${currentRelationship} mm. ` +
+        `Rectify the vehicle’s suspension relationship to comply with s.5, LS9, QCOP or s6.12.i QLVIM</p>`;
+    }
+  } else {
+    // Missing suspension inputs → clear outputs (no popups)
+    if (frontDiv) { frontDiv.innerText = ""; frontDiv.className = "result"; }
+    if (rearDiv)  { rearDiv.innerText  = ""; rearDiv.className  = "result"; }
+    if (summaryDiv) summaryDiv.innerHTML = "";
+  }
+
+  // Tyres (show measured string in Results)
+  const tw = document.getElementById("m_tyreWidth")?.value?.trim();
+  const ta = document.getElementById("m_tyreAspect")?.value?.trim();
+  const tr = document.getElementById("m_tyreRim")?.value?.trim();
+  const td = document.getElementById("m_tyreUnitLabel")?.innerText;
+  const resultsTyreEl = document.getElementById("resultsTyre");
+  if (resultsTyreEl) {
+    if (tw && ta && tr) {
+      const tyrePlacardText = measureTyreInMM ? (tw + "/" + ta + "R" + tr) : (td || "");
+      resultsTyreEl.innerText = tyrePlacardText || "-";
+    } else {
+      resultsTyreEl.innerText = "";
+    }
+  }
+
+  // Tyre Diameter increase check (>50 mm)
+  const tyreDiaAlert = document.getElementById("tyreDiaAlert");
+  if (tyreDiaAlert) {
+    tyreDiaAlert.innerHTML = "";
+    tyreDiaAlert.className = "result";
+
+    const sw = parseFloat(document.getElementById("tyreWidth").value);
+    const sa = parseFloat(document.getElementById("tyreAspect").value);
+    const sr = parseFloat(document.getElementById("tyreRim").value);
+    const mw = parseFloat(document.getElementById("m_tyreWidth").value);
+    const ma = parseFloat(document.getElementById("m_tyreAspect").value);
+    const mr = parseFloat(document.getElementById("m_tyreRim").value);
+
+    if ([sw, sa, sr, mw, ma, mr].every(v => !isNaN(v))) {
+      const dia = (w, a, r) => (2 * (w * a / 100)) + (r * 25.4);
+      const stockDia    = dia(sw, sa, sr);
+      const measuredDia = dia(mw, ma, mr);
+      const allowedMax  = stockDia + 50;
+
+      if ((measuredDia - stockDia) > 50) {
+        tyreDiaAlert.className = "result warning-red";
+        tyreDiaAlert.innerText =
+          `Tyre Diameter – This vehicle's tyre diameter is ${measuredDia.toFixed(0)} mm ` +
+          `however, it must be no more than ${allowedMax.toFixed(0)} mm. ` +
+          `Rectify the tyre diameter to comply with s.4.4, LS9, QCOP and s7.4(d) of QLVIM.`;
+      }
+    }
+  }
+
+  // Wheel Track check (>50 mm only)
+  const stockTrackFront = parseFloat(document.getElementById("trackFront").value);
+  const stockTrackRear  = parseFloat(document.getElementById("trackRear").value);
+  const measTrackFront  = parseFloat(document.getElementById("measTrackFront").value);
+  const measTrackRear   = parseFloat(document.getElementById("measTrackRear").value);
+  const trackAlertEl    = document.getElementById("trackAlert");
+  if (trackAlertEl) {
+    trackAlertEl.innerHTML = "";
+    trackAlertEl.className = "result";
+    if ([stockTrackFront, stockTrackRear, measTrackFront, measTrackRear].every(v => !isNaN(v))) {
+      const diffF = measTrackFront - stockTrackFront;
+      const diffR = measTrackRear  - stockTrackRear;
+      if (diffF > 50 || diffR > 50) {
+        trackAlertEl.className = "result warning-red";
+        trackAlertEl.innerText =
+          "Wheel Track – Standard wheel track measurements for this vehicle are " + stockTrackFront + " mm " +
+          "front and " + stockTrackRear + " mm rear and must not be increased by more than 50 mm. " +
+          "The vehicle's wheel track measurements are front " + measTrackFront + " mm and rear " + measTrackRear + " mm. " +
+          "Rectify the wheel track to comply with s.4.4, LS9, QCOP.";
+      }
+    }
+  }
+
+  // Inspection → Results
+  const inspResultsEl = document.getElementById("inspectionResults");
+  if (inspResultsEl) {
+    inspResultsEl.innerHTML = "";
+    inspResultsEl.className = "result";
+    if (swayBarIssue === true) {
+      inspResultsEl.className = "result warning-red";
+      inspResultsEl.innerText =
+        "Sway bar - Sway bar components are broken, loose, unduly worn, disconnected, or have been removed - ensure vehicle complies with s6.14 of QLVIM";
+    }
+  }
+
+  // Open Results unless told to stay here
+  if (!stayHere) {
+    const resultsBtn = Array.from(document.getElementsByClassName("tablink"))
+      .find(b => b.getAttribute("onclick")?.includes("'results'"));
+    if (resultsBtn) {
+      openTab({ currentTarget: resultsBtn }, "results");
+    } else {
+      Array.from(document.getElementsByClassName("tab-content")).forEach(el => el.classList.remove("active"));
+      document.getElementById("results").classList.add("active");
+    }
+  }
+}
+
+/* ---------------- Inspection state (Yes/No) ---------------- */
+let swayBarIssue = null; // null = unanswered, true = issue found, false = compliant
+function answerSwayBar(isYes) {
+  const infoEl = document.getElementById("swayBarInfo");
+  const inspResultsEl = document.getElementById("inspectionResults");
+
+  if (isYes) {
+    swayBarIssue = true;
+    infoEl.innerHTML = `<span class="warning-red">Issue flagged. Added to Results automatically.</span>`;
+    if (inspResultsEl) {
+      inspResultsEl.className = "result warning-red";
+      inspResultsEl.innerText =
+        "Sway bar - Sway bar components are broken, loose, unduly worn, disconnected, or have been removed - ensure vehicle complies with s6.14 of QLVIM";
+    }
+    compileResults(true, true); // silent + stay on Inspection tab
+  } else {
+    swayBarIssue = false;
+    infoEl.innerHTML = `<span class="green">Vehicle compliant.</span>`;
+    if (inspResultsEl) {
+      inspResultsEl.innerHTML = "";
+      inspResultsEl.className = "result";
+    }
+    compileResults(true, true); // silent + stay on Inspection tab
+  }
+}
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js');
+    });
+  }
+</script>
+
+</body>
+</html>

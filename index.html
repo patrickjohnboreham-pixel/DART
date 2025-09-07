@@ -4,8 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>DART (alpha)</title>
-<link rel="manifest" href="manifest.json">
+<!-- in <head> -->
+<link rel="manifest" href="manifest.json?v=3">
 <meta name="theme-color" content="#0b5fff">
+
 <style>
   body { font-family: Arial, sans-serif; margin: 20px; }
 
@@ -647,13 +649,19 @@ function answerSwayBar(isYes) {
   }
 }
 </script>
+<!-- just before </body> -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js');
+      navigator.serviceWorker
+        .register('./service-worker.js', { scope: './' })
+        .then(r => console.log('SW scope:', r.scope))
+        .catch(e => console.error('SW registration failed', e));
     });
   }
 </script>
+
+
 
 </body>
 </html>

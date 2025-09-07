@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_NAME = "dart-v2"; // bump when you deploy new versions
+const CACHE_NAME = "dart-v3"; // bump when you deploy new versions
 
 const PRECACHE = [
   "./",

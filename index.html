@@ -936,9 +936,17 @@ function answerSwayBar(isYes) {
   // ---------- Load the QLVIM mapping JSON ----------
   let qlvimData = [];
 
-  fetch('/assets/QLVIM_mapping.json?v=5')
-    .then(r => r.json())
-    .then(rows => {
+  const BASE = location.pathname.includes("/DART/") ? "/DART/" : "./";
+const url  = `${BASE}assets/QLVIM_mapping.json?nocache=${Date.now()}`;
+
+fetch(url, { cache: "no-store" })
+  .then(r => {
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  })
+  .then(rows => {
+    // your existing code here (unchanged)
+
       // Normalize column names (handles either lower/upper-case headers)
       qlvimData = rows.map(r => ({
         phrase:  (r.phrase ?? r.Phrase ?? "").toString(),

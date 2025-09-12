@@ -1,0 +1,450 @@
+[
+  {
+    "Phrase": "loose seat",
+    "Section": "1.1(a)",
+    "Category": "Seats and seating",
+    "Clause": "Seating components are not fitted, not secure, are structurally damaged, or have sharp/jagged edges or protrusions.",
+    "Page": 13
+  },
+  {
+    "Phrase": "perished seat cushion",
+    "Section": "1.1(c)",
+    "Category": "Seats and seating",
+    "Clause": "Seating components are cracked, broken, distorted, missing, or corroded to the point where the seat is weakened and/or failure is likely to occur.",
+    "Page": 13
+  },
+  {
+    "Phrase": "missing seats",
+    "Section": "1.1(e)",
+    "Category": "Seats and seating",
+    "Clause": "Any change to seating capacity is not certified by an Approved Person with the fitment of the prescribed modification plate with the LK1 modification code.",
+    "Page": 13
+  },
+  {
+    "Phrase": "aftermarket seat belts",
+    "Section": "1.2(a)",
+    "Category": "Seatbelts",
+    "Clause": "The original vehicle manufacturer’s seatbelts are missing, or the replacement belts do not meet the vehicle manufacturer’s specifications.",
+    "Page": 13
+  },
+  {
+    "Phrase": "seat belt frayed",
+    "Section": "1.2(d)",
+    "Category": "Seatbelts",
+    "Clause": "Seatbelt webbing is not correctly and firmly secured at each end or is damaged, frayed, split, torn, altered, or modified. Note 1: Information Sheet No. 2 of Part 3 Information Sheets for Approved Examiners contains details of the ADR seatbelt requirements. Note 2: Discoloration alone of the seatbelt webbing is not a cause of rejection.",
+    "Page": 13
+  },
+  {
+    "Phrase": "seat belt not working",
+    "Section": "1.2(f)",
+    "Category": "Seatbelts",
+    "Clause": "Seatbelt attachments are not operational. Note 4: Seatbelt attachments include buckles, tongues, adjustment devices, and emergency locking retractors.",
+    "Page": 14
+  },
+  {
+    "Phrase": "seat belt not retracting",
+    "Section": "1.2(f)",
+    "Category": "Seatbelts",
+    "Clause": "Seatbelt attachments are not operational. Note 4: Seatbelt attachments include buckles, tongues, adjustment devices, and emergency locking retractors.",
+    "Page": 14
+  },
+  {
+    "Phrase": "headlight inopertive",
+    "Section": "2.1(a)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "tail light inoperative",
+    "Section": "2.1(a)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "headlight not working",
+    "Section": "2.1(a)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "headlight blown",
+    "Section": "2.1(a)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "brake light not working",
+    "Section": "2.1(a)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "number plate light not working",
+    "Section": "2.1(a)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "number plate light inoperative",
+    "Section": "2.1(a)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "brake light inoperative",
+    "Section": "2.1(a)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "spot light inoperative",
+    "Section": "2.1(a)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "light bar inoperative",
+    "Section": "2.1(a)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "tinted tail lights",
+    "Section": "2.1(b)",
+    "Category": "Lighting equipment",
+    "Clause": "Any lighting component has a tinted or opaque cover or tinting applied to it. Note 2: Headlamps may be fitted with clip on type opaque covers provided they can be readily removed without the use of tools. Clear headlamp covers are acceptable provided the intensity of high or low beam is not affected. Original vehicle manufacturer tinted external covers that form part of the original light assembly are acceptable.",
+    "Page": 15
+  },
+  {
+    "Phrase": "obscured light",
+    "Section": "2.1(c)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components, including additional lighting, are not clearly visible under all normal conditions and of a consistent intensity or are affected by dirty/discoloured lenses or poor electrical contact.",
+    "Page": 15
+  },
+  {
+    "Phrase": "tail light lens faded",
+    "Section": "2.1(d)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components are not securely mounted, are faded, discoloured or are not free from cracks, holes, or other damage which would allow the entry of moisture or dirt to impair the efficiency of the component. Note 3: Lens repairs are",
+    "Page": 15
+  },
+  {
+    "Phrase": "guard lens faded",
+    "Section": "2.1(d)",
+    "Category": "Lighting equipment",
+    "Clause": "Lighting components fitted to a vehicle are not operational, are damaged, or not located in positions as required by prescribed standards. Note 1: For vehicles which are fitted with Light Emitting Diode (LED) lamp assemblies and of which some individual LEDs are not operating on a particular unit, it will be permissible to accept individual LED lamp assemblies if up to and including 20% of the LEDs in an individual assembly are not operating. That is, if an LED lamp assembly has: • 9 individual LEDs, it will be acceptable to have 1 LED not working. • 10 individual LEDs, it will be acceptable to have 2 LEDs not working. • 22 individual LEDs, it will be acceptable to have 4 LEDs not working.",
+    "Page": 15
+  },
+  {
+    "Phrase": "white light to rear",
+    "Section": "2.1(f)",
+    "Category": "Lighting equipment",
+    "Clause": "Any rear facing lamp, other than a reversing lamp, shows white light to the rear of the vehicle.",
+    "Page": 15
+  },
+  {
+    "Phrase": "coloured lights",
+    "Section": "2.1(h)",
+    "Category": "Lighting equipment",
+    "Clause": "A lighting component is fitted which is not required or permitted by Vehicle Standards or another law. Note 4: Further information on lamps/lights is contained in Information Sheets No. 8 (page 68) and 9 (page 70) in Part 3 Information Sheets for Approved Examiners.",
+    "Page": 15
+  },
+  {
+    "Phrase": "rusted headlight",
+    "Section": "2.2(b)",
+    "Category": "Head lamps",
+    "Clause": "Reflector surfaces are tarnished or have other damage that reduces the intensity of low or high beam.",
+    "Page": 16
+  },
+  {
+    "Phrase": "obscured headlight",
+    "Section": "2.2(c)",
+    "Category": "Head lamps",
+    "Clause": "The light from the headlamp is obstructed by the fitting of other components (e.g., bull bars, nudge bars, or fishing rod holders).",
+    "Page": 16
+  },
+  {
+    "Phrase": "hid headlights",
+    "Section": "2.2(g)",
+    "Category": "Head lamps",
+    "Clause": "High Intensity Gas-Discharge (HID) assemblies are not self-levelling, do not have a wash/wipe function and/or do not disperse the light correctly.",
+    "Page": 16
+  },
+  {
+    "Phrase": "indicators white",
+    "Section": "2.2(h)",
+    "Category": "Head lamps",
+    "Clause": "The following lamps, where applicable, do not operate correctly or do not emit the colour light as indicated: • front park or side lamps (white); • brake lamps (red); • tail lamps (red); • turn signal indicator lamps (amber, or white if prior to 1973); • rear facing signal indicator lamps (yellow/amber/red prior to 1973); • hazard warning lamps (yellow/amber); • clearance/side marker lamps, (if fitted, front – yellow/white, side – yellow/amber, rear – yellow/amber and red); Note 6: For pre-ADR vehicles, clearance lamps must be fitted to all vehicles which exceed 2.2 metres in width and be mounted not more than 400mm in from the side of the vehicle, at least 750mm higher than the centre of any low beam headlamp or not lower than the top of the windscreen. Note 7: Clearance lamps must be fitted to ADR complying vehicles which exceed 2.1 metres in width, be mounted not more than 400mm in from the side of the vehicle and not lower than the top of the windscreen. • number plate lamp/s (white); • reversing lamps/s (yellow/amber, if pre-1989 vehicles only, or white); • daytime running lamp/s (white); • additional lamps, if fitted. Note 8: Further information on lamps/lights is contained in Information Sheets",
+    "Page": 17
+  },
+  {
+    "Phrase": "brake lights white",
+    "Section": "2.2(h)",
+    "Category": "Head lamps",
+    "Clause": "The following lamps, where applicable, do not operate correctly or do not emit the colour light as indicated: • front park or side lamps (white); • brake lamps (red); • tail lamps (red); • turn signal indicator lamps (amber, or white if prior to 1973); • rear facing signal indicator lamps (yellow/amber/red prior to 1973); • hazard warning lamps (yellow/amber); • clearance/side marker lamps, (if fitted, front – yellow/white, side – yellow/amber, rear – yellow/amber and red); Note 6: For pre-ADR vehicles, clearance lamps must be fitted to all vehicles which exceed 2.2 metres in width and be mounted not more than 400mm in from the side of the vehicle, at least 750mm higher than the centre of any low beam headlamp or not lower than the top of the windscreen. Note 7: Clearance lamps must be fitted to ADR complying vehicles which exceed 2.1 metres in width, be mounted not more than 400mm in from the side of the vehicle and not lower than the top of the windscreen. • number plate lamp/s (white); • reversing lamps/s (yellow/amber, if pre-1989 vehicles only, or white); • daytime running lamp/s (white); • additional lamps, if fitted. Note 8: Further information on lamps/lights is contained in Information Sheets",
+    "Page": 17
+  },
+  {
+    "Phrase": "reverse lights on",
+    "Section": "2.3(a)",
+    "Category": "Other Lamps",
+    "Clause": "The reverse lamp, if applicable, operates other than when reverse gear is selected.",
+    "Page": 17
+  },
+  {
+    "Phrase": "loose wiring",
+    "Section": "2.5(a)",
+    "Category": "Wiring harness",
+    "Clause": "Electrical wiring is not securely mounted or is located in such a way that would make the vehicle unsafe.",
+    "Page": 18
+  },
+  {
+    "Phrase": "battery loose",
+    "Section": "2.6(a)",
+    "Category": "Battery",
+    "Clause": "A battery is not secured in a cradle or carrier using hold-down clamps.",
+    "Page": 18
+  },
+  {
+    "Phrase": "horn inopertative",
+    "Section": "2.7(a)",
+    "Category": "Warning device",
+    "Clause": "A warning device is not fitted or operational and the tone is not of a single pitch. Dual air or electrical horns are acceptable provided they are of a single pitch.",
+    "Page": 18
+  },
+  {
+    "Phrase": "chipped windscreen",
+    "Section": "3.1(f)",
+    "Category": "Windscreen and glazing",
+    "Clause": "The primary vision area is cracked, scored, chipped, badly sandblasted, or otherwise damaged so as to impair the driver’s vision or damage the wiper blades.",
+    "Page": 19
+  },
+  {
+    "Phrase": "cracked windscreen",
+    "Section": "3.1(f)",
+    "Category": "Windscreen and glazing",
+    "Clause": "The primary vision area is cracked, scored, chipped, badly sandblasted, or otherwise damaged so as to impair the driver’s vision or damage the wiper blades.",
+    "Page": 19
+  },
+  {
+    "Phrase": "wiper blades perished",
+    "Section": "3.3(b)",
+    "Category": "Windscreen and glazing",
+    "Clause": "Wiper components are not in good condition (i.e., rubbers are split, frayed, hardened, or perished and/or wiper arms/blades are missing, bent, or twisted preventing the wiper blade rubbers from clearing the windscreen effectively).",
+    "Page": 20
+  },
+  {
+    "Phrase": "washers not working",
+    "Section": "3.3(c)",
+    "Category": "Windscreen and glazing",
+    "Clause": "Where applicable, the vehicle is not fitted with a windscreen washer system that is operational, is incorrectly aimed, or is not operable from the normal driving position.",
+    "Page": 20
+  },
+  {
+    "Phrase": "washers inoperative",
+    "Section": "3.3(c)",
+    "Category": "Windscreen and glazing",
+    "Clause": "Where applicable, the vehicle is not fitted with a windscreen washer system that is operational, is incorrectly aimed, or is not operable from the normal driving position.",
+    "Page": 20
+  },
+  {
+    "Phrase": "bull bar obscures headlights",
+    "Section": "4.3(a)",
+    "Category": "Body fittings",
+    "Clause": "The fitting of the bull bar is such that it adversely affects the safety of the vehicle or obscures the driver’s view or any mandatory lamps.",
+    "Page": 21
+  },
+  {
+    "Phrase": "wheels stick out",
+    "Section": "4.6(d)",
+    "Category": "Mudguards and wheel arches",
+    "Clause": "The front mudguard does not shield the portion of the wheel extending rearward from a point vertically above and horizontally behind the centre of the front wheel.",
+    "Page": 23
+  },
+  {
+    "Phrase": "number plate damaged",
+    "Section": "4.9(b)",
+    "Category": "Number plates",
+    "Clause": "A number plate is deteriorated, faded, or damaged to an extent that the registration number is not legible from a distance of 20 metres.",
+    "Page": 24
+  },
+  {
+    "Phrase": "numer plate faded",
+    "Section": "4.9(b)",
+    "Category": "Number plates",
+    "Clause": "A number plate is deteriorated, faded, or damaged to an extent that the registration number is not legible from a distance of 20 metres.",
+    "Page": 24
+  },
+  {
+    "Phrase": "number plate obscured",
+    "Section": "4.9(d)",
+    "Category": "Number plates",
+    "Clause": "Number plate characters are not visible from any point within an arc of 45 degrees at a distance of 20 metres above and on both sides of the number plate.",
+    "Page": 24
+  },
+  {
+    "Phrase": "sway bar missing",
+    "Section": "6.14(a)",
+    "Category": "Sway bars, linkages and bushes",
+    "Clause": "Sway bar components are broken, loose, unduly worn, disconnected, or have been removed. Note 1: Sway bar components include sway bars, linkages, and bushes.",
+    "Page": 33
+  },
+  {
+    "Phrase": "low clearance",
+    "Section": "6.17(a)",
+    "Category": "Ground clearance",
+    "Clause": "The ground clearance of a vehicle is less than 100mm excluding unsprung mass, flexible mudguards or mudflaps, flexible underbody aerodynamic aids and flexible underbody covers and trays. Note 1: Ground clearance requirements for motor vehicles are detailed in Information Sheet No. 13 (page 82) in Part 3 Information Sheets for Approved Examiners.",
+    "Page": 34
+  },
+  {
+    "Phrase": "lowered",
+    "Section": "6.17(a)",
+    "Category": "Ground clearance",
+    "Clause": "The ground clearance of a vehicle is less than 100mm excluding unsprung mass, flexible mudguards or mudflaps, flexible underbody aerodynamic aids and flexible underbody covers and trays. Note 1: Ground clearance requirements for motor vehicles are detailed in Information Sheet No. 13 (page 82) in Part 3 Information Sheets for Approved Examiners.",
+    "Page": 34
+  },
+  {
+    "Phrase": "too low",
+    "Section": "6.17(a)",
+    "Category": "Ground clearance",
+    "Clause": "The ground clearance of a vehicle is less than 100mm excluding unsprung mass, flexible mudguards or mudflaps, flexible underbody aerodynamic aids and flexible underbody covers and trays. Note 1: Ground clearance requirements for motor vehicles are detailed in Information Sheet No. 13 (page 82) in Part 3 Information Sheets for Approved Examiners.",
+    "Page": 34
+  },
+  {
+    "Phrase": "incorrect wheels",
+    "Section": "7.1(a)",
+    "Category": "Wheels/rims",
+    "Clause": "Wheels/rims are not of an approved type and construction or are not compatible with hubs. Note 1: This relates only to those wheels in contact with the road. The spare wheel is not included in a safety check. Please also refer to the LS Section of NCOP.",
+    "Page": 34
+  },
+  {
+    "Phrase": "tyres worn",
+    "Section": "7.3(h)",
+    "Category": "Tyres/ wheel width",
+    "Clause": "Tyres do not have a tread pattern at least 1.5mm deep, other than at tread wear indicators, in a band that runs continuously across the tyre width that normally comes into contact with the road and around the whole circumference of the tyre. Note 3: The principal grooves of the tyre are the wide circumferential grooves positioned in the central zone of the tyre tread that have tyre wear indicators. If the tyre has tyre wear indicators, the tyre wear depth should be measured in the principal grooves. A tyre, however, must not have any excessively uneven, localised, and patchy wear of the tread that may increase the safety risk.",
+    "Page": 36
+  },
+  {
+    "Phrase": "no tread",
+    "Section": "7.3(h)",
+    "Category": "Tyres/ wheel width",
+    "Clause": "Tyres do not have a tread pattern at least 1.5mm deep, other than at tread wear indicators, in a band that runs continuously across the tyre width that normally comes into contact with the road and around the whole circumference of the tyre. Note 3: The principal grooves of the tyre are the wide circumferential grooves positioned in the central zone of the tyre tread that have tyre wear indicators. If the tyre has tyre wear indicators, the tyre wear depth should be measured in the principal grooves. A tyre, however, must not have any excessively uneven, localised, and patchy wear of the tread that may increase the safety risk.",
+    "Page": 36
+  },
+  {
+    "Phrase": "tyres bald",
+    "Section": "7.3(h)",
+    "Category": "Tyres/ wheel width",
+    "Clause": "Tyres do not have a tread pattern at least 1.5mm deep, other than at tread wear indicators, in a band that runs continuously across the tyre width that normally comes into contact with the road and around the whole circumference of the tyre. Note 3: The principal grooves of the tyre are the wide circumferential grooves positioned in the central zone of the tyre tread that have tyre wear indicators. If the tyre has tyre wear indicators, the tyre wear depth should be measured in the principal grooves. A tyre, however, must not have any excessively uneven, localised, and patchy wear of the tread that may increase the safety risk.",
+    "Page": 36
+  },
+  {
+    "Phrase": "gearbox oil leak",
+    "Section": "9.4.(a)",
+    "Category": "Leaks",
+    "Clause": "Any component leaks oil on to the roadway or onto any exhaust system or brake component.",
+    "Page": 38
+  },
+  {
+    "Phrase": "diff oil leak",
+    "Section": "9.4.(a)",
+    "Category": "Leaks",
+    "Clause": "Any component leaks oil on to the roadway or onto any exhaust system or brake component.",
+    "Page": 38
+  },
+  {
+    "Phrase": "driveline oil leak",
+    "Section": "9.4.(a)",
+    "Category": "Leaks",
+    "Clause": "Any component leaks oil on to the roadway or onto any exhaust system or brake component.",
+    "Page": 38
+  },
+  {
+    "Phrase": "engine oil leak",
+    "Section": "9.4.(a)",
+    "Category": "Leaks",
+    "Clause": "Any component leaks oil on to the roadway or onto any exhaust system or brake component.",
+    "Page": 38
+  },
+  {
+    "Phrase": "cat missing",
+    "Section": "9.11(a)",
+    "Category": "Exhaust construction",
+    "Clause": "Any original emission related component is not properly located, connected, damaged, deteriorated, or altered in any way to reduce effectiveness (e.g., a catalytic converter is not fitted where one was originally provided or has been bypassed).",
+    "Page": 47
+  },
+  {
+    "Phrase": "dpf missing",
+    "Section": "9.11(a)",
+    "Category": "Exhaust construction",
+    "Clause": "Any original emission related component is not properly located, connected, damaged, deteriorated, or altered in any way to reduce effectiveness (e.g., a catalytic converter is not fitted where one was originally provided or has been bypassed).",
+    "Page": 47
+  },
+  {
+    "Phrase": "cat delete",
+    "Section": "9.11(a)",
+    "Category": "Exhaust construction",
+    "Clause": "Any original emission related component is not properly located, connected, damaged, deteriorated, or altered in any way to reduce effectiveness (e.g., a catalytic converter is not fitted where one was originally provided or has been bypassed).",
+    "Page": 47
+  },
+  {
+    "Phrase": "dpf delete",
+    "Section": "9.11(a)",
+    "Category": "Exhaust construction",
+    "Clause": "Any original emission related component is not properly located, connected, damaged, deteriorated, or altered in any way to reduce effectiveness (e.g., a catalytic converter is not fitted where one was originally provided or has been bypassed).",
+    "Page": 47
+  },
+  {
+    "Phrase": "muffler missing",
+    "Section": "9.11(b)",
+    "Category": "Exhaust construction",
+    "Clause": "Any pipe or muffler incorporated in the exhaust system to ensure the vehicle maintains compliance with ADRs for vehicle noise emission is not fitted.",
+    "Page": 47
+  },
+  {
+    "Phrase": "straight through pipe",
+    "Section": "9.11(b)",
+    "Category": "Exhaust construction",
+    "Clause": "Any pipe or muffler incorporated in the exhaust system to ensure the vehicle maintains compliance with ADRs for vehicle noise emission is not fitted.",
+    "Page": 47
+  },
+  {
+    "Phrase": "straight pipe",
+    "Section": "9.11(b)",
+    "Category": "Exhaust construction",
+    "Clause": "Any pipe or muffler incorporated in the exhaust system to ensure the vehicle maintains compliance with ADRs for vehicle noise emission is not fitted.",
+    "Page": 47
+  },
+  {
+    "Phrase": "straight through exhaust",
+    "Section": "9.11(b)",
+    "Category": "Exhaust construction",
+    "Clause": "Any pipe or muffler incorporated in the exhaust system to ensure the vehicle maintains compliance with ADRs for vehicle noise emission is not fitted.",
+    "Page": 47
+  },
+  {
+    "Phrase": "abs light on",
+    "Section": "10.1(c)",
+    "Category": "Active safety features",
+    "Clause": "Where fitted, any advanced braking system warning lamp is inoperative, indicates a system fault, or is missing. Note 2: Advanced braking systems are programmed by the Original Equipment Manufacturer and includes, but is not limited to, systems such as anti-lock braking systems (ABS), electronic braking systems (EBS), electronic stability control (ESC), etc.",
+    "Page": 49
+  },
+  {
+    "Phrase": "led headlight",
+    "Section": "Information sheet 9",
+    "Category": "Headlights",
+    "Clause": "No headlight self-levelling device fitted or No self-cleaning function fitted or Design of headlamps reflector not compatible with bulb (light not focused correctly)",
+    "Page": 77
+  }
+]

@@ -1,0 +1,121 @@
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+/* Print only the Results tab (and make it fill the page) */
+
+  /* Tabs */
+  .tabbar {
+    position: sticky; top: 0; z-index: 10;
+    background: #f9f9f9; border-bottom: 2px solid #ccc; margin-bottom: 12px;
+    display: flex; gap: 6px; flex-wrap: wrap; padding-top: 4px;
+  }
+  .tabbar button {
+    padding: 10px 16px; cursor: pointer; border: 1px solid #ccc;
+    border-bottom: none; border-radius: 6px 6px 0 0; background: #f0f0f0;
+  }
+  .tabbar button.active { background: #fff; font-weight: bold; }
+  .tab-content { display: none; padding: 12px; border: 1px solid #ccc; border-radius: 0 6px 6px 6px; }
+  .tab-content.active { display: block; }
+
+  /* Help tab gallery */
+  .help-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .help-grid a { display: block; }
+  .help-grid img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+  /* General UI */
+  label { display: inline-block; min-width: 160px; margin: 6px 0; }
+  input[type="text"], input[type="number"] { width: 160px; padding: 6px; }
+  button.action,
+a.action {
+  display: inline-block;
+  padding: 10px 16px;
+  margin: 6px 6px 0 0;
+  cursor: pointer;
+  background: #007bff;
+  color: #fff;
+  text-decoration: none;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  text-align: center;
+}
+
+button.action:hover,
+a.action:hover {
+  background: #005ec4;
+}
+
+  .result { margin-top: 10px; font-weight: bold; }
+  .ok { color: black; }
+  .warning-orange { color: orange; }
+  .warning-red { color: red; }
+  .summary {
+  margin-top: 16px;
+  padding: 10px 0 0 0;  /* no left/right padding */
+  border-top: 2px solid #ccc;
+}
+
+  .green { color: green; font-weight: bold; }
+  .red { color: red; font-weight: bold; }
+  #modDescriptions ul { padding-left: 20px; }
+  #modDescriptions li { margin-bottom: 5px; }
+
+  /* Quick links */
+  .link-buttons a {
+    display: inline-block;
+    margin: 8px 8px 0 0;
+    padding: 12px 20px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+  .link-buttons a:hover { background: #0056b3; }
+/* Print only the Results tab (and make it fill the page) */
+@media print {
+  body * { visibility: hidden !important; }
+  #results, #results * { visibility: visible !important; }
+  #results { position: absolute; left: 0; top: 0; width: 100%; }
+
+  /* Optional: hide tab bar & buttons when printing */
+  .tabbar, button, .action { display: none !important; }
+
+  /* Tighter spacing for print */
+  .summary { border: 1px solid #ccc; background: #fff; border-radius: 6px; }
+  .summary p { margin: 6px 0; }
+}
+/* Banner */
+#banner {
+  background: linear-gradient(90deg, #0b5fff, #004aad); /* blue gradient */
+  color: white;
+  padding: 20px;
+  text-align: center;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+#banner h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+#banner h2 {
+  margin: 5px 0 0;
+  font-size: 18px;
+  font-weight: normal;
+  letter-spacing: 2px;
+}
+
+</style>

@@ -4,6 +4,36 @@
 // ---- Globals ----
 let qlvimData = [];
 let swayBarIssue = null;   // null = unanswered, true = issue, false = compliant
+// ---- QLVIM text fallback + synonyms ----
+let qlvimText = [];
+
+const synonyms = {
+  "ride height": ["ground clearance", "suspension height"],
+  "ground clearance": ["ride height"],
+  "bullbar": ["nudge bar", "roo bar"],
+  "tyre": ["tire", "tyres", "tires"],
+  "seatbelt": ["safety belt", "seat belt"],
+  "lift kit": ["raised suspension", "suspension lift"],
+  "snorkel": ["air intake snorkel"],
+  "winch": ["front winch", "electric winch"]
+};
+
+function expandTerms(term) {
+  const t = term.toLowerCase().trim();
+  const extra = synonyms[t] || [];
+  return [t, ...extra.map(x => x.toLowerCase())];
+}
+
+// Highlight a short snippet around the hit
+function getSnippet(fullText, terms, radius = 140) {
+  const hay = fullText.toLowerCase();
+  let hit = -1;
+  for (const t of terms) { const i = hay.indexOf(t); if (i !== -1) { hit = i; break; } }
+  const start = Math.max(0, (hit === -1 ? 0 : hit - Math.floor(radius / 2)));
+  const slice = fullText.slice(start, start + radius);
+  const pattern = new RegExp(`(${terms.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join("|")})`, "gi");
+  return "…" + slice.replace(pattern, "<mark>$1</mark>") + "…";
+}
 
 /* ---------------- Tabs ---------------- */
 function openTab(evt, tabName) {
@@ -42,6 +72,76 @@ function showModDescriptions() {
     html += "</ul>";
   }
   document.getElementById("modDescriptions").innerHTML = html;
+}
+// ----------------- QLVIM Helpers -----------------
+
+// Try to pull a section ref like s2.6.3 from nearby text (best-effort)
+function extractSectionRef(text) {
+  const m = text.match(/\b(?:s(?:ection)?\s*)?(\d+(?:\.\d+)+)\b/i);
+  return m ? `s${m[1]}` : null;
+}
+
+// Add the fallback item into the Results tab and flip the button state
+function addFallbackToResults(page, sectionRef, btnEl) {
+  const sec = sectionRef || "Manual (text search)";
+  const clause = "—"; // no clause for fallback
+  const noteId = `note-fallback-${page}`;
+
+  // Use your existing pipeline
+  addToResults("Unmapped", sec, clause, page, noteId);
+
+  // Update button look
+  if (btnEl) {
+    btnEl.textContent = "Added in results";
+    btnEl.style.backgroundColor = "red";
+    btnEl.style.color = "white";
+    btnEl.disabled = true; // optional, can remove if you want repeatable adds
+  }
+}
+function fallbackQLVIMTextSearch(rawTerm) {
+  if (!qlvimText?.length) return false;
+
+  const terms = expandTerms(rawTerm);
+
+  // ✅ Get all matching pages, not just the first
+  const pageHits = qlvimText.filter(p =>
+    terms.some(t => p.text?.toLowerCase().includes(t))
+  );
+
+  if (!pageHits.length) return false;
+
+  const resultsEl = document.getElementById("searchResults");
+  if (!resultsEl) return false;
+
+  pageHits.forEach(pageHit => {
+    const snippet = getSnippet(pageHit.text, terms);
+    const link = qlvimLink(pageHit.page);
+    const sectionRef = extractSectionRef(pageHit.text);
+
+    const ensureHtml = sectionRef
+      ? `ensure complies with <a class="qlvim-link" href="${link}" target="_blank">${sectionRef}</a>`
+      : `ensure complies with <a class="qlvim-link" href="${link}" target="_blank">manual (page ${pageHit.page})</a>`;
+
+    const html = `
+      <div class="result-item">
+        <div class="results-header">Unmapped match (text search) — page ${pageHit.page}</div>
+        <div class="result-note" style="margin-top:6px;">${snippet}</div>
+        <div class="photo-note" style="margin-top:8px;">${ensureHtml}</div>
+        <div style="margin-top:8px;">
+          <button type="button" class="action"
+            onclick="addFallbackToResults(${pageHit.page}, ${sectionRef ? `'${sectionRef}'` : null}, this)">
+            Add to Results
+          </button>
+          <a class="qlvim-link" href="${link}" target="_blank" style="margin-left:8px; text-decoration:underline;">
+            Open manual to page ${pageHit.page}
+          </a>
+        </div>
+      </div>
+    `;
+    resultsEl.insertAdjacentHTML("beforeend", html);
+  });
+
+  return true;
 }
 
 function clearModCodes() {
@@ -308,7 +408,7 @@ async function saveReportPDF() {
   // Make sure latest numbers are reflected
   compileResults(true, true); // silent, stayHere=true
   // Ensure Results tab is visible for print CSS
-  openTab({ currentTarget: null }, 'results');
+ // openTab({ currentTarget: null }, 'results');
 
   // Bring photos into the Results tab
   await loadPhotosIntoResults();
@@ -329,7 +429,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ---------------- Compile Results ---------------- */
-function compileResults(silent = false, stayHere = false) {
+function compileResults(silent = false, stayHere = true) {
+
   // Suspension (stock/home)
   const stockFront = parseFloat(document.getElementById("suspensionFront").value);
   const stockRear  = parseFloat(document.getElementById("suspensionRear").value);
@@ -566,12 +667,14 @@ fetch(QLVIM_URL, { cache: "no-store" })
   .catch(err => console.error("QLVIM mapping failed to load:", err));
 
   // ---------- Helpers ----------
-  function sectionTitle(section) { return `Section ${section}`; }
-  function qlvimLink(page) {
-  // Always relative from viewer/ → assets/
-  const file = encodeURIComponent(`../assets/QLVIM.pdf?nocache=${Date.now()}`);
-  return `viewer/viewer.html?file=${file}#page=${page}`;
+ function qlvimLink(page) {
+  // Works locally (127.0.0.1:5500) and on GitHub Pages (/DART/)
+  const BASE = location.pathname.includes("/DART/") ? "/DART/" : "/";
+  const pdfUrl = new URL(`${BASE}assets/QLVIM.pdf?nocache=${Date.now()}`, location.origin).href;
+  const viewerUrl = new URL(`${BASE}viewer/viewer.html`, location.origin).href;
+  return `${viewerUrl}?file=${encodeURIComponent(pdfUrl)}#page=${page}`;
 }
+
 
 
 // Append a selected result to the Results tab (Inspection results area)
@@ -673,10 +776,11 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
 
 
 
-    if (results.length === 0) {
-      out.innerHTML = "<p><em>No relevant sections found. Try a simpler phrase.</em></p>";
-      return;
-    }
+   if (results.length === 0) {
+  // Don’t exit — let the fallback text search run below
+  out.innerHTML = "";
+}
+
 
     results.forEach((it, i) => {
      // Read fields in a case-insensitive way
@@ -694,41 +798,62 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
   const secText = `s${sec}`;
 
   const wrap = document.createElement("div");
-  wrap.style.marginBottom = "14px";
-  wrap.innerHTML = `
-    <div>
-      <strong><span style="color:red;">${category}</span></strong>
-      – ${clause}
-      – ensure vehicle complies with
-      <strong><a href="${link}" target="_blank" rel="noopener" style="color:blue; text-decoration:underline;">[${secText}]</a></strong>
-      of QLVIM.
-    </div>
+// build result card
+wrap.className = "result-item"; // styling via CSS, no inline styles
+wrap.innerHTML = `
+  <div>
+    <strong><span class="category-pill">${category}</span></strong>
+    – ${clause}
+    – ensure vehicle complies with
+    <strong><a class="qlvim-link" href="${link}" target="_blank" rel="noopener">[${secText}]</a></strong>
+    of QLVIM.
+  </div>
 
-    <div style="margin-top:6px;">
-      <em>Note:</em>
-      <input id="note-${i}" type="text" placeholder="optional note" style="width:70%; max-width:640px; padding:6px; margin-left:6px;">
-    </div>
+  <div class="result-note">
+    <em>Note:</em>
+    <input id="note-${i}" class="note-input" type="text" placeholder="optional note">
+  </div>
 
-    <div style="margin-top:8px;">
-  <button type="button" class="action"
-    onclick="addToResults(
-      '${category.replace(/'/g, "\\'")}',
-      '${sec.replace(/'/g, "\\'")}',
-      '${clause.replace(/'/g, "\\'")}',
-      ${page},
-      'note-${i}',
-      this
-    )">
-    Add to Results
-  </button>
-</div>
+  <div class="result-actions">
+    <button
+      type="button"
+      class="action result-add-btn"
+      data-category="${category.replace(/"/g, "&quot;")}"
+      data-sec="${sec}"
+      data-clause="${clause.replace(/"/g, "&quot;")}"
+      data-page="${page}"
+      data-note-id="note-${i}"
+    >Add to Results</button>
+  </div>
+`;
+out.appendChild(wrap);
+}); // <-- closes your .forEach or .map loop
 
-  `;
-  out.appendChild(wrap);
-});
+// ---- Fallback: if no mapping hits were rendered, try text search ----
+const out2 = document.getElementById("searchResults");
+const query =
+  document.getElementById("searchQLVIM")?.value ||
+  document.getElementById("dartSearch")?.value ||
+  "";
+if (out2 && out2.children.length === 0 && query.trim()) {
+  const ok = fallbackQLVIMTextSearch(query.trim());
+  if (!ok) {
+    out2.innerHTML =
+      `<div class="results-header">No results found for "${query.trim()}". Try a different term.</div>`;
   }
+}
 
+} // <--- closes searchQLVIM()
+// =====================================================
+// DOMContentLoaded (runs after page load)
+// =====================================================
 document.addEventListener("DOMContentLoaded", () => {
+  // Load pre-extracted manual text for fallback search
+  fetch(`${BASE}assets/QLVIM_text.json?nocache=${Date.now()}`)
+    .then(r => r.json())
+    .then(data => { qlvimText = data; console.log(`QLVIM_text loaded: ${data.length} pages`); })
+    .catch(err => console.warn("QLVIM_text.json load failed", err));
+
   // ✅ Wire the Mod Codes buttons
   document.getElementById("modCodeButton")
     ?.addEventListener("click", showModDescriptions);
@@ -757,9 +882,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (out.innerHTML.trim() && !document.getElementById("qlvim-top3-header")) {
         const hdr = document.createElement("div");
         hdr.id = "qlvim-top3-header";
-        hdr.style.margin = "8px 0 10px";
-        hdr.style.fontSize = "13px";
-        hdr.style.color = "#555";
+        hdr.className = "results-header";  // use class instead of inline styles
         hdr.textContent = "Top 3 results";
         out.insertBefore(hdr, out.firstChild);
       }
@@ -767,4 +890,48 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     console.warn("searchQLVIM() not defined yet. Make sure the base function is declared above this script.");
   }
-});
+
+  // 3) Delegate clicks for dynamically-created "Add to Results" buttons
+  const resultsContainer = document.getElementById("searchResults");
+  if (resultsContainer) {
+    resultsContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest(".result-add-btn");
+      if (!btn) return;
+
+      addToResults(
+        btn.dataset.category,
+        btn.dataset.sec,
+        btn.dataset.clause,
+        Number(btn.dataset.page),
+        btn.dataset.noteId,
+        btn
+      );
+    });
+  } else {
+    console.warn("#searchResults not found when wiring listener");
+  }
+
+  // 4) Tab button event listeners
+  document.querySelectorAll(".tablink").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      openTab(e, btn.dataset.tab);
+    });
+  });
+
+  // 5) (Optional) Search button click if you removed inline onclick
+  document.getElementById("searchQLVIMBtn")?.addEventListener("click", searchQLVIM);
+
+  // 6) Compile button behaviour
+  const compileBtn = document.getElementById("compileBtn");
+  if (compileBtn) {
+    compileBtn.addEventListener("click", function () {
+      // Run your existing compile function
+      compileResults();
+
+      // Update button text + style
+      compileBtn.textContent = "Added in results";
+      compileBtn.style.backgroundColor = "red";
+      compileBtn.style.color = "white";
+    });
+  }
+}); // <-- end DOMContentLoaded

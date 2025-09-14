@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json?v=4">
 <meta name="theme-color" content="#0b5fff">
 
-<link rel="stylesheet" href="assets/css/dart.css?v=4">
+<link rel="stylesheet" href="assets/css/dart.css?v=5">
 
 </head>
 <body>
@@ -20,14 +20,15 @@
 
 <!-- Tab Buttons -->
 <div class="tabbar">
-  <button type="button" class="tablink active" onclick="openTab(event, 'home')">Home</button>
-  <button type="button" class="tablink" onclick="openTab(event, 'measurements')">Vehicle Measurements</button>
-  <button type="button" class="tablink" onclick="openTab(event, 'inspection')">Inspection</button>
-  <button class="tablink" onclick="openTab(event, 'askDart')">Ask DART</button>
-  <button type="button" class="tablink" onclick="openTab(event, 'photos')">Vehicle Photos</button>
-  <button type="button" class="tablink" onclick="openTab(event, 'results')">Results</button>
-  <button type="button" class="tablink" onclick="openTab(event, 'help')">Help</button>
+  <button type="button" class="tablink active" data-tab="home">Home</button>
+  <button type="button" class="tablink" data-tab="measurements">Vehicle Measurements</button>
+  <button type="button" class="tablink" data-tab="inspection">Inspection</button>
+  <button type="button" class="tablink" data-tab="askDart">Ask DART</button>
+  <button type="button" class="tablink" data-tab="photos">Vehicle Photos</button>
+  <button type="button" class="tablink" data-tab="results">Results</button>
+  <button type="button" class="tablink" data-tab="help">Help</button>
 </div>
+
 
 <!-- Home Tab -->
 <div id="home" class="tab-content active">
@@ -70,7 +71,7 @@
   <!-- Engineering Mod Codes -->
   <h3>Engineering Mod Codes</h3>
   <p><em>Enter mod codes if applicable (e.g. LM1, LS10). Separate multiple codes with commas.</em></p>
-  <input type="text" id="modCodes" placeholder="e.g. LM1, LS9, LS10" style="width: 320px;">
+ <input type="text" id="modCodes" placeholder="e.g. LM1, LS9, LS10">
   <button type="button" id="modCodeButton" class="action">Check Codes</button>
   <button type="button" id="modCodeClear" class="action action-secondary">
   Clear Codes
@@ -109,10 +110,11 @@
 
 <!-- Save Details -->
 <button type="button" class="action" onclick="saveVehicleDetails()">Save Details</button>
-<p style="margin-top:8px; font-size:14px; color:#555;">
+<p class="footer-note">
     This application was developed by TI P Boreham.  
     Enquiries and feedback: <a href="mailto:patrick.j.boreham@tmr.qld.gov.au">patrick.j.boreham@tmr.qld.gov.au</a>
-  </p>
+</p>
+
 <div id="vehicleSummary" class="summary"></div>
 
 
@@ -135,7 +137,7 @@
   </div>
 
   <!-- Wheel Track (measured) -->
-  <div class="section" style="margin-top:14px;">
+  <div class="section section-spaced">
     <h3>Wheel Track</h3>
     <p><em>Centre of tyre to centre of tyre (mm)</em></p>
 
@@ -147,18 +149,18 @@
   </div>
 
   <!-- Tyres (measured tab, separate from Home) -->
-  <div class="section" style="margin-top:14px;">
+  <div class="section section-spaced">
   <h3>Tyres</h3>
   <p><em>Enter measured tyre size. Accepts metric (e.g. 265/75R16) or imperial (e.g. 35/12.5R16).</em></p>
 
   <label>Tyre Size (measured):</label>
-  <input type="text" id="m_tyreSize" placeholder="265/75R16 or 35/12.5R16" style="width: 220px;">
+  <input type="text" id="m_tyreSize" placeholder="265/75R16 or 35/12.5R16">
   <div id="m_tyreParsed" class="result"></div>
 </div>
 
   <!-- Action -->
-  <button type="button" class="action" onclick="compileResults()">Compile Results</button>
-  <p style="margin-top:6px;"><em>This will read the RVD “stock” numbers you entered on the Home tab (Suspension/Track) and compare with these measured values.</em></p>
+  <button type="button" id="compileBtn" class="action">Calculate in results</button>
+  <p class="small-note"><em>This will read the RVD “stock” numbers you entered on the Home tab (Suspension/Track) and compare with these measured values.</em></p>
 </div>
 
 <!-- Inspection Tab -->
@@ -186,14 +188,14 @@
   <p><em>Search Queensland Light Vehicle Inspection Manual</em></p>
 
   <input
-    type="text"
-    id="dartSearch"
-    placeholder="Type a vehicle defect..."
-    style="width:80%; max-width:720px; padding:8px; margin-right:8px;"
-  />
+  type="text"
+  id="dartSearch"
+  placeholder="Type a vehicle defect..."
+/>
+
   <button type="button" class="action" onclick="searchQLVIM()">Search</button>
 
- <div id="searchResults" style="margin-top:16px;"></div>
+ <div id="searchResults"></div>
 </div> <!-- /#askDart -->
 
 <!-- Vehicle Photos Tab -->
@@ -212,15 +214,19 @@
 <button type="button" class="action" onclick="saveReportPDF()">Save Report as PDF</button>
 
 <!-- (Optional) include photos note -->
-<div style="font-size:12px;color:#555;margin-top:6px;">Photos attached on the “Vehicle Photos” tab will be included.</div>
+<div class="photo-note">
+  Photos attached on the “Vehicle Photos” tab will be included.
+</div>
+
 
 <!-- Where photos will be shown in the Results before printing -->
 <div id="resultsPhotos" class="summary"></div>
 
-  <div id="resultsKey" class="result" style="margin-bottom:10px;">
-    <strong><span style="color:green;">Compliant</span></strong> - No issues detected. &nbsp; | &nbsp; 
-    <strong><span style="color:red;">Defective</span></strong> - Non-compliant, rectification required.
-  </div>
+  <div id="resultsKey" class="result">
+    <strong><span class="status-ok">Compliant</span></strong> - No issues detected. &nbsp; | &nbsp; 
+    <strong><span class="status-bad">Defective</span></strong> - Non-compliant, rectification required.
+</div>
+
 
     <!-- Saved Vehicle Summary (from Home) -->
   <div id="resultsVehicleSummary" class="summary"></div>
@@ -242,7 +248,7 @@
 <!-- Help Tab -->
 <div id="help" class="tab-content">
   <h3>Help</h3>
-  <p><em>Tap a photo to view it full size in a new tab.</em></p>
+  <p><em>Tap an image to view it full size in a new tab.</em></p>
 
   <div class="help-grid">
     <a href="Help/helpphoto1.jpg" target="_blank" rel="noopener" class="action">Tyre Diameter</a>
@@ -251,8 +257,13 @@
     <a href="Help/helpphoto4.jpg" target="_blank" rel="noopener" class="action">Suspension Height</a>
     <a href="Help/helpphoto5.jpg" target="_blank" rel="noopener" class="action">Body Blocks</a>
   </div>
+<h4 style="margin-top:20px;">Reference Documents</h4>
+  <p><em>Tap a link to open in a new tab.</em></p>
+  <div class="help-grid">
+    <a href="assets/QLVIM.pdf" target="_blank" rel="noopener" class="action">Queensland Light Vehicle Inspection Manual (QLVIM PDF)</a>
+  </div>
 </div> <!-- /#help -->
 
-<script src="assets/js/app.js?v=6" defer></script>
+<script src="assets/js/app.js?v=8" defer></script>
 </body>
 </html>

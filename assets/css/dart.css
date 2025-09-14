@@ -139,3 +139,79 @@ a.action:hover {
 .action + .action {
   margin-top: 6px;
 }
+
+#modCodes {
+  width: 320px;
+}
+
+#m_tyreSize {
+  width: 220px;
+}
+.footer-note {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #555;
+}
+.section-spaced {
+  margin-top: 14px;
+}
+.small-note {
+  margin-top: 6px;
+}
+#resultsKey {
+  margin-bottom: 10px;
+}
+
+.status-ok {
+  color: green;
+}
+
+.status-bad {
+  color: red;
+}
+.photo-note {
+  font-size: 12px;
+  color: #555;
+  margin-top: 6px;
+}
+#dartSearch {
+  width: 80%;
+  max-width: 720px;
+  padding: 8px;
+  margin-right: 8px;
+}
+.results-header {
+  margin: 8px 0 10px;
+  font-size: 13px;
+  color: #555;
+}
+.result-item { margin-bottom: 14px; }
+.category-pill { color: red; }
+.qlvim-link { text-decoration: underline; }
+.result-note { margin-top: 6px; }
+.note-input { width: 70%; max-width: 640px; padding: 6px; margin-left: 6px; }
+.result-actions { margin-top: 8px; }
+
+#searchResults {
+  margin-top: 16px;
+}
+/* Force colors in Ask DART results */
+#askDart #searchResults .category-pill {
+  color: #d32f2f !important; /* red */
+}
+
+#askDart #searchResults .qlvim-link,
+#askDart #searchResults .qlvim-link:visited {
+  color: #0b5fff !important; /* blue */
+  text-decoration: underline !important;
+}
+
+/* Results key colors (Results tab) */
+#resultsKey .status-ok { color: #008000 !important; }
+#resultsKey .status-bad { color: #c62828 !important; }
+
+.category-pill {
+  color: red;
+  font-weight: bold;
+  text-decoration: none !important; /* 🔑 removes underline */
+}

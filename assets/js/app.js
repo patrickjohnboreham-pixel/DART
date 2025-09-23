@@ -4,6 +4,8 @@
 // ---- Globals ----
 let qlvimData = [];
 let swayBarIssue = null;   // null = unanswered, true = issue, false = compliant
+let shackleIssue = null; // null = unanswered, true = issue, false = compliant
+
 // ---- QLVIM text fallback + synonyms ----
 let qlvimText = [];
 
@@ -447,26 +449,69 @@ function compileResults(silent = false, stayHere = true) {
 
   // Suspension compare only when all four suspension values exist
 if (haveStockSusp && haveMeasuredSusp) {
-  const frontMsg = checkLiftValues(stockFront, measuredFront);
-  const rearMsg  = checkLiftValues(stockRear,  measuredRear);
+  // --- Vehicle Height Increase logic (replaces old "Lift: ..." lines) ---
+  const FrontInc   = measuredFront - stockFront;   // mm
+  const RearInc    = measuredRear  - stockRear;    // mm
+  const OverallInc = Math.max(FrontInc, RearInc);  // use MAX, no rounding
 
-  frontDiv.innerText = frontMsg.text; 
-  frontDiv.className = `result ${frontMsg.className}`;
-  rearDiv.innerText  = rearMsg.text;  
-  rearDiv.className  = `result ${rearMsg.className}`;
+  // Detect LS10 in Home → Mod Codes (case-insensitive, word boundary)
+  const modCodesRaw = (document.getElementById("modCodes")?.value || "");
+  const hasLS10 = /(^|[^A-Z0-9])LS10([^A-Z0-9]|$)/i.test(modCodesRaw);
 
+  // Compliance & heading colour
+  // Compliant: <50 OR (50–125 AND LS10 entered)
+  // Non-compliant: (50–125 AND no LS10) OR >125
+  const compliant  = (OverallInc < 50) || ((OverallInc >= 50 && OverallInc <= 125) && hasLS10);
+  const labelClass = compliant ? "green" : "red";
+  const heading    = `<strong><span class="${labelClass}">Vehicle Height Increase</span></strong>`;
+
+  // Detailed lines for non-compliant blocks
+  const detailsBlock =
+    ` – Standard vertical measurement from wheel centre to top of wheel arch:<br>` +
+    `• Front: ${measuredFront} mm (standard: ${stockFront} mm; increase: ${FrontInc} mm)<br>` +
+    `• Rear: ${measuredRear}  mm (standard: ${stockRear} mm; increase: ${RearInc}  mm)`;
+
+  // Branching text
+  let html = "";
+  if (OverallInc < 50) {
+    html = `${heading} – This vehicle’s suspension/body height increase of <strong>${OverallInc} mm</strong> is within allowance for basic modification.`;
+  } else if (OverallInc <= 125) {
+    if (hasLS10) {
+      html = `${heading} – This vehicle’s suspension/body height increase of <strong>${OverallInc} mm</strong> is within the scope of <strong>LS9/LS10</strong> modifications.`;
+    } else {
+      html =
+        `${heading}${detailsBlock}<br><br>` +
+        `This vehicle’s height increase of <strong>${OverallInc} mm</strong> exceeds the basic modification allowance. ` +
+        `Rectify this vehicle’s height to standard, or ensure compliance with <strong>Vehicle Standards Instruction: Minor Modifications (VSIMM)</strong>, ` +
+        `or have this vehicle certified to comply with <strong>Section 1, LS9 of the Queensland Code of Practice: Vehicle Modifications (QCOP)</strong>.`;
+    }
+  } else { // OverallInc > 125
+    html =
+      `${heading}${detailsBlock}<br><br>` +
+      `This vehicle’s height increase of <strong>${OverallInc} mm</strong> exceeds the basic modification allowance ` +
+      `and is outside the scope of <strong>LS9/LS10</strong> modifications. ` +
+      `Rectify this vehicle’s height to standard, or ensure compliance with <strong>Vehicle Standards Instruction: Minor Modifications (VSIMM)</strong>, ` +
+      `or have this vehicle certified to comply with <strong>Section 1, LS9 of the Queensland Code of Practice: Vehicle Modifications (QCOP)</strong>.`;
+  }
+
+  // Clear the old per-axle “Lift:” lines
+  if (frontDiv) { frontDiv.innerText = ""; frontDiv.className = "result"; }
+  if (rearDiv)  { rearDiv.innerText  = ""; rearDiv.className  = "result"; }
+
+  // Insert our block into #summary
+  if (summaryDiv) summaryDiv.innerHTML = `<p>${html}</p>`;
+
+  // Preserve your Unequal Lift warning as an extra paragraph
   const originalRelationship = stockFront - stockRear;
   const currentRelationship  = measuredFront - measuredRear;
-
-  if (originalRelationship !== currentRelationship) {
-  summaryDiv.innerHTML =
-    `<p><strong><span style="color:red;">Unequal Lift</span></strong> – ` +
-    `<strong>The original relationship between the front and rear suspension is ${originalRelationship} mm and must not be changed. ` +
-    `Currently the relationship is ${currentRelationship} mm. ` +
-    `Rectify the vehicle’s suspension relationship to comply with s.5, LS9, QCOP or s6.12.i QLVIM.</strong></p>`;
-} else {
-  summaryDiv.innerHTML = "";
-}
+  if (originalRelationship !== currentRelationship && summaryDiv) {
+    const unequal =
+      `<p><strong><span style="color:red;">Unequal Lift</span></strong> – ` +
+      `<strong>The original relationship between the front and rear suspension is ${originalRelationship} mm and must not be changed. ` +
+      `Currently the relationship is ${currentRelationship} mm. ` +
+      `Rectify the vehicle’s suspension relationship to comply with s.5, LS9, QCOP or s6.12.i QLVIM.</strong></p>`;
+    summaryDiv.insertAdjacentHTML('beforeend', unequal);
+  }
 
 } else {
   // Missing suspension inputs → clear outputs
@@ -474,6 +519,7 @@ if (haveStockSusp && haveMeasuredSusp) {
   if (rearDiv)  { rearDiv.innerText  = ""; rearDiv.className  = "result"; }
   if (summaryDiv) summaryDiv.innerHTML = "";
 }
+
 
 
   // Tyres (show measured string in Results - using new parser)
@@ -674,7 +720,31 @@ fetch(QLVIM_URL, { cache: "no-store" })
   const viewerUrl = new URL(`${BASE}viewer/viewer.html`, location.origin).href;
   return `${viewerUrl}?file=${encodeURIComponent(pdfUrl)}#page=${page}`;
 }
+// === Body Blocks helpers ===
+function hasLS10Mod() {
+  const v = (document.getElementById("modCodes")?.value || "");
+  return /(^|[^A-Z0-9])LS10([^A-Z0-9]|$)/i.test(v);
+}
 
+function setStatus(el, text, ok) {
+  if (!el) return;
+  el.textContent = text;
+  el.className = `result ${ok ? 'green' : 'red'}`;
+}
+
+function setInspectionLine(lineId, htmlOrEmpty) {
+  const container = document.getElementById("inspectionResults");
+  if (!container) return;
+
+  let line = document.getElementById(lineId);
+  if (!htmlOrEmpty) { if (line) line.remove(); return; }
+  if (!line) { 
+    line = document.createElement("div");
+    line.id = lineId;
+    container.appendChild(line); 
+  }
+  line.innerHTML = htmlOrEmpty;
+}
 
 
 // Append a selected result to the Results tab (Inspection results area)
@@ -842,9 +912,8 @@ if (out2 && out2.children.length === 0 && query.trim()) {
       `<div class="results-header">No results found for "${query.trim()}". Try a different term.</div>`;
   }
 }
-
-} // <--- closes searchQLVIM()
-// =====================================================
+  }
+ // <--- closes searchQLVIM()
 // DOMContentLoaded (runs after page load)
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
@@ -934,4 +1003,149 @@ document.addEventListener("DOMContentLoaded", () => {
       compileBtn.style.color = "white";
     });
   }
+// ---- Sway bar (Inspection) ----
+  const swayYes    = document.getElementById("swayYes");
+  const swayNo     = document.getElementById("swayNo");
+  const swayStatus = document.getElementById("swayStatus");
+
+  if (swayYes) {
+    swayYes.addEventListener("click", () => {
+      setStatus(swayStatus, "Issue flagged. Added to Results automatically.", false);
+      setInspectionLine(
+        "res-swaybar",
+        `<p><strong><span class="red">Sway bar</span></strong>: ` +
+        `One or more components broken, loose, unduly worn, disconnected, or removed. ` +
+        `Rectify as per s.6.14 of QLVIM.</p>`
+      );
+    });
+  }
+
+  if (swayNo) {
+    swayNo.addEventListener("click", () => {
+      setStatus(swayStatus, "Compliant.", true);
+      setInspectionLine("res-swaybar", "");
+    });
+  }
+  // ---- Shackles (Inspection) ----
+const shackleYes    = document.getElementById("shackleYes");
+const shackleNo     = document.getElementById("shackleNo");
+const shackleStatus = document.getElementById("shackleStatus");
+
+if (shackleYes) {
+  shackleYes.addEventListener("click", () => {
+    setStatus(shackleStatus, "Issue flagged. Added to Results automatically.", false);
+    setInspectionLine(
+      "res-shackles",
+      `<p><strong><span class="red">Suspension Shackles</span></strong>: ` +
+      `This vehicle is fitted with extended shackles. Re-fit factory shackles as per s6.13.b of QLVIM.</p>`
+    );
+  });
+}
+
+if (shackleNo) {
+  shackleNo.addEventListener("click", () => {
+    setStatus(shackleStatus, "Compliant.", true);
+    setInspectionLine("res-shackles", "");
+  });
+}
+
+  // ---- Body Blocks (Inspection) ----
+  const bbYes      = document.getElementById("bbYes");
+  const bbNo       = document.getElementById("bbNo");
+  const bbFollow   = document.getElementById("bbFollow");
+  const bbLe50Yes  = document.getElementById("bbLe50Yes");
+  const bbLe50No   = document.getElementById("bbLe50No");
+  const bbStatusEl = document.getElementById("bbStatus");
+
+  function bbShowFollowup()  { if (bbFollow) bbFollow.style.display = "block"; }
+  function bbHideFollowup()  { if (bbFollow) bbFollow.style.display = "none"; }
+
+  
+  // Q1: Are body blocks fitted?
+if (bbYes) bbYes.addEventListener("click", () => {
+  if (!hasLS10Mod()) {
+    // No LS10 → fail immediately, no follow-up shown
+    if (bbFollow) bbFollow.style.display = "none";
+    setStatus(bbStatusEl, "Issue flagged. Added to Results automatically.", false);
+    setInspectionLine(
+      "res-body-blocks",
+      `<p><strong><span class="red">Body Blocks</span></strong>: ` +
+      `This vehicle has body blocks. Remove or have this vehicle certified to comply with s.1, LS9, QCOP.</p>`
+    );
+  } else {
+    // LS10 present → now ask the height question
+    if (bbFollow) bbFollow.style.display = "block";
+    setStatus(bbStatusEl, "", true);                 // clear status until Q2 answered
+    setInspectionLine("res-body-blocks", "");        // nothing in Results yet
+  }
+});
+
+  if (bbLe50Yes) bbLe50Yes.addEventListener("click", () => {
+    if (hasLS10Mod()) {
+      setStatus(bbStatusEl, "Compliant – LS10 plate fitted.", true);
+      setInspectionLine("res-body-blocks", "");
+    } else {
+      setStatus(bbStatusEl, "Issue flagged. Added to Results automatically.", false);
+      setInspectionLine(
+        "res-body-blocks",
+        `<p><strong><span class="red">Body Blocks</span></strong>: ` +
+        `This vehicle has body blocks. Remove or have this vehicle certified to comply with s.1, LS9, QCOP.</p>`
+      );
+    }
+  });
+  // Q1: No — body blocks not fitted → compliant, hide follow-up, clear any result
+if (bbNo) bbNo.addEventListener("click", () => {
+  if (bbFollow) bbFollow.style.display = "none";
+  setStatus(bbStatusEl, "Compliant.", true);
+  setInspectionLine("res-body-blocks", "");
+});
+
+// Q2: No — NOT ≤ 50 mm (so > 50 mm) → flagged and added to Results
+if (bbLe50No) bbLe50No.addEventListener("click", () => {
+  setStatus(bbStatusEl, "Issue flagged. Added to Results automatically.", false);
+  setInspectionLine(
+    "res-body-blocks",
+    `<p><strong><span class="red">Body Blocks</span></strong>: ` +
+    `This vehicle has body blocks higher than 50 mm fitted and is out of scope for LS9/LS10. ` +
+    `Remove or ensure blocks do not exceed 50 mm in height as per s.1, LS9, QCOP.</p>`
+  );
+});
+  // ---- Defect Clearance Wording ----
+const dcLocation = document.getElementById("dcLocation");
+const dcOutput   = document.getElementById("dcOutput");
+
+if (dcLocation && dcOutput) {
+  dcLocation.addEventListener("change", () => {
+    const loc = dcLocation.value;
+    let text = "";
+
+    if (loc === "Carseldine") {
+      text = `
+<p><strong>Self-Clearance:</strong><br>
+The owner/owner representative must complete the "Defect Notice Clearance Declaration" where indicated on the rear of this notice and return by the due date to;<br>
+TMR COMPLIANCE P.O BOX 212 Carseldine QLD 4034 or rce_bss@tmr.qld.gov.au</p>
+
+<p><strong>Approved Inspection Station:</strong><br>
+An Approved Inspection Station is required to verify the defects identified in this defect notice have been rectified and complete the "Defect Notice Clearance Declaration" on the rear of this notice where indicated and if fitted, remove and destroy the Defective Vehicle Label.<br>
+TMR COMPLIANCE P.O BOX 212 Carseldine QLD 4034 or rce_bss@tmr.qld.gov.au</p>
+
+<p><strong>TMR Clearance:</strong><br>
+For booking contact rce_bss@tmr.qld.gov.au or call 13 23 80</p>
+
+<p><strong>Request for Documentation:</strong><br>
+Please provide copies of documentation evidence verifying identified defects have been rectified.</p>
+
+<p><strong>Vehicle Use Restriction:</strong><br>
+Vehicle must not be used on a road after the notice is issued other than to move it to –</p>
+`;
+
+    } else if (loc) {
+      text = `<em>Address for ${loc} not yet configured.</em>`;
+    }
+
+    dcOutput.style.display = text ? "block" : "none";
+    dcOutput.innerHTML = text;
+  });
+}
+
 }); // <-- end DOMContentLoaded

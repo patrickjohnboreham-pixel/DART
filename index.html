@@ -40,11 +40,8 @@
   <a href="https://www.rover.infrastructure.gov.au/RAVPublicSearch/" target="_blank" rel="noopener">
     RAV Search (Post 2021)
   </a>
-  <a href="https://myrta.com/rvd/searchRVD.do?submitValue=start" target="_blank" rel="noopener">
-    RVD (1999–2001)
-  </a>
-  <a href="https://www.myrta.com/myrta/applications/rvd/rvd-pre1999/index.htm" target="_blank" rel="noopener">
-    RVD (Pre 1999)
+  <a href="https://myrta.com/rvd/index.jsp;jsessionid=9E98CE1089B8D52943E712239D069C16" target="_blank" rel="noopener">
+    RVD (Pre 2001)
   </a>
 </div>
 
@@ -168,17 +165,64 @@
   <h3>Inspection</h3>
   <p><em>Questions are optional.</em></p>
 
-  <div class="section">
-    <h4>Sway bar</h4>
-    <p>Are any sway bar components broken, loose, unduly worn, disconnected, or removed?</p>
+  <!-- Wrapper: JS will sort these .section blocks alphabetically by data-label -->
+  <div id="inspectionQuestions">
 
-    <div>
-      <button type="button" class="action" onclick="answerSwayBar(true)">Yes</button>
-      <button type="button" class="action" onclick="answerSwayBar(false)">No</button>
+    <!-- Body Blocks -->
+    <div class="section" data-label="Body Blocks">
+      <h4>Body Blocks</h4>
+      <p>Are body blocks fitted to this vehicle?</p>
+      <div class="btn-row">
+        <button type="button" id="bbYes" class="action">Yes</button>
+        <button type="button" id="bbNo"  class="action">No</button>
+      </div>
+
+      <!-- Follow-up (only if LS10 present after "Yes") -->
+      <div id="bbFollow" style="display:none; margin-top:8px;">
+        <p>Are the body blocks less than or equal to 50 mm high?</p>
+        <div class="btn-row">
+          <button type="button" id="bbLe50Yes" class="action">Yes</button>
+          <button type="button" id="bbLe50No"  class="action">No</button>
+        </div>
+      </div>
+
+      <!-- Status line for Body Blocks -->
+      <div id="bbStatus" class="result"></div>
     </div>
 
-    <!-- Appears when you answer -->
-    <div id="swayBarInfo" class="result"></div>
+    <!-- Sway bar -->
+    <div class="section" data-label="Sway bar">
+      <h4>Sway bar</h4>
+      <p>Are any sway bar components broken, loose, unduly worn, disconnected, or removed?</p>
+      <div class="btn-row">
+        <button type="button" id="swayYes" class="action">Yes</button>
+        <button type="button" id="swayNo"  class="action">No</button>
+      </div>
+
+      <!-- Status line for Sway bar -->
+      <div id="swayStatus" class="result"></div>
+    </div>
+
+
+<!-- Suspension Shackles -->
+<div class="section" data-label="Suspension Shackles">
+  <h4>Suspension Shackles</h4>
+  <p>Are extended spring shackles fitted?</p>
+  <div class="btn-row">
+    <button type="button" id="shackleYes" class="action">Yes</button>
+    <button type="button" id="shackleNo"  class="action">No</button>
+  </div>
+
+  <!-- Status line -->
+  <div id="shackleStatus" class="result"></div>
+</div>
+
+    <!-- Add more questions like this:
+    <div class="section" data-label="Bull bar">
+      <h4>Bull bar</h4>
+      ...buttons/outputs...
+    </div>
+    -->
   </div>
 </div>
 
@@ -233,6 +277,7 @@
   <div id="frontResult" class="result"></div>
   <div id="rearResult" class="result"></div>
   <div id="summary" class="summary"></div>
+<div id="inspectionResults" class="result"></div>
 
   <!-- Wheel Track warning (only shows if >50mm) -->
   <div id="trackAlert" class="result"></div>
@@ -257,13 +302,34 @@
     <a href="Help/helpphoto4.jpg" target="_blank" rel="noopener" class="action">Suspension Height</a>
     <a href="Help/helpphoto5.jpg" target="_blank" rel="noopener" class="action">Body Blocks</a>
   </div>
-<h4 style="margin-top:20px;">Reference Documents</h4>
-  <p><em>Tap a link to open in a new tab.</em></p>
+<h3 style="margin-top:20px;">Reference Documents</h3>
+  
   <div class="help-grid">
     <a href="assets/QLVIM.pdf" target="_blank" rel="noopener" class="action">Queensland Light Vehicle Inspection Manual (QLVIM PDF)</a>
   </div>
-</div> <!-- /#help -->
+<!-- Defect Clearance Wording -->
+<div class="section" id="defectClearance">
+  <h3>Defect Clearance Wording</h3>
 
-<script src="assets/js/app.js?v=8" defer></script>
+  <label for="dcLocation"><strong>Select Location:</strong></label>
+  <select id="dcLocation" class="action">
+    <option value="" selected disabled>— Select a location —</option>
+    <option value="Bethania">Bethania</option>
+    <option value="Cairns">Cairns</option>
+    <option value="Carseldine">Carseldine</option>
+    <option value="Maroochydore">Maroochydore</option>
+    <option value="Rockhampton">Rockhampton</option>
+    <option value="Southport">Southport</option>
+    <option value="Toowoomba">Toowoomba</option>
+    <option value="Townsville">Townsville</option>
+  </select>
+
+  <!-- Output (hidden until selection) -->
+  <div id="dcOutput" class="result" style="display:none; white-space:pre-wrap; margin-top:12px;"></div>
+</div>
+
+
+
+<script src="assets/js/app.js?v=16" defer></script>
 </body>
 </html>

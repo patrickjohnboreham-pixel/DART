@@ -99,11 +99,16 @@
   <label>Rear:</label>
   <input type="number" id="trackRear" placeholder="e.g. 1620"><br>
 
-  <h4>Tyre Placard</h4>
-<label>Tyre Size:</label>
-<input type="number" id="tyreWidth" placeholder="265"> /
-<input type="number" id="tyreAspect" placeholder="75"> R
-<input type="number" id="tyreRim" placeholder="16"><br>
+  <h3>Tyre Sizes</h3>
+<p><em>Enter multiple sizes, one per line or separated by commas (optional).</em></p>
+<textarea id="tyreSizes" rows="5" style="width:100%; max-width:480px;" placeholder="205/80R16
+7.50R16
+255/70R15LT
+31x10.50R15"></textarea>
+<br>
+<button type="button" id="calcLargestTyre" class="action">Calculate Largest</button>
+<div id="largestTyreResult" style="margin-top:8px; font-size:14px; color:#333;"></div>
+
 
 <!-- Save Details -->
 <button type="button" class="action" onclick="saveVehicleDetails()">Save Details</button>
@@ -330,6 +335,6 @@
 
 
 
-<script src="assets/js/app.js?v=16" defer></script>
+<script src="assets/js/app.js?v=17" defer></script>
 </body>
 </html>

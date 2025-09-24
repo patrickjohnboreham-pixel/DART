@@ -173,42 +173,69 @@ function toggleTyreUnitsMeasure() {
 }
 // ===== Tyre parsing helpers (START) =====
 // Returns { ok, type, width_mm, aspect, rim_in, overall_mm, normalized, reason }
+// Returns { ok, type, width_mm, aspect, rim_in, overall_mm, normalized, reason }
 function parseTyreSize(sizeStr) {
   if (!sizeStr) return { ok: false, reason: "empty" };
-  const s = sizeStr.trim().toUpperCase().replace(/\s+/g, "");
+  // normalise: uppercase, remove spaces
+  const s0 = sizeStr.trim().toUpperCase();
+  const s  = s0.replace(/\s+/g, "");
 
-  // Metric: 265/75R16  or  265/75 16
-  const metricRe = /^(\d{3})\/(\d{2,3})R?(\d{2}(?:\.\d+)?)$/;
-
-  // Imperial: 35/12.5R16  or  35x12.5R16
-  const imperialRe = /^(\d{2}(?:\.\d+)?)[X\/](\d{1,2}(?:\.\d+)?)R?(\d{2}(?:\.\d+)?)$/;
-
-  // Metric?
-  let m = s.match(metricRe);
+  // 1) Modern metric with ratio: 265/75R16
+  let m = s.match(/^(\d{3})\/(\d{2,3})R?(\d{2}(?:\.\d+)?)$/);
   if (m) {
-    const width = parseFloat(m[1]);   // mm
-    const aspect = parseFloat(m[2]);  // %
-    const rimIn = parseFloat(m[3]);   // in
-    const overall = (2 * (width * aspect / 100)) + (rimIn * 25.4); // mm
-    return {
-      ok: true, type: "metric",
-      width_mm: width, aspect, rim_in: rimIn, overall_mm: overall,
-      normalized: `${width}/${aspect}R${rimIn}`
-    };
+    const width = parseFloat(m[1]);
+    const aspect = parseFloat(m[2]);
+    const rimIn = parseFloat(m[3]);
+    const overall = 2 * (width * aspect / 100) + rimIn * 25.4;
+    return { ok: true, type: "metric", width_mm: width, aspect, rim_in: rimIn,
+             overall_mm: overall, normalized: `${width}/${aspect}R${rimIn}` };
   }
 
-  // Imperial?
-  m = s.match(imperialRe);
+  // 2) Early metric without ratio: 205R16  → assume 82%
+  m = s.match(/^(\d{3})R(\d{2})$/);
   if (m) {
-    const overallIn = parseFloat(m[1]); // overall dia in
-    const sectionIn = parseFloat(m[2]); // section width in (info only)
-    const rimIn     = parseFloat(m[3]); // in
-    const overall   = overallIn * 25.4; // mm
-    return {
-      ok: true, type: "imperial",
-      width_mm: sectionIn * 25.4, aspect: null, rim_in: rimIn, overall_mm: overall,
-      normalized: `${overallIn.toString().replace(/\.0+$/,"")}x${sectionIn.toString().replace(/\.0+$/,"")}R${rimIn}`
-    };
+    const width = parseFloat(m[1]);
+    const rimIn = parseFloat(m[2]);
+    const aspect = 82;
+    const overall = 2 * (width * aspect / 100) + rimIn * 25.4;
+    return { ok: true, type: "metric82", width_mm: width, aspect, rim_in: rimIn,
+             overall_mm: overall, normalized: `${width}/${aspect}R${rimIn}` };
+  }
+
+  // 3) Flotation (x): 31x10.5R15  → first number is OD (inches)
+  m = s.match(/^(\d{2}(?:\.\d+)?)X(\d{1,2}(?:\.\d+)?)R?(\d{2})$/);
+  if (m) {
+    const odIn = parseFloat(m[1]);
+    const secIn = parseFloat(m[2]);
+    const rimIn = parseFloat(m[3]);
+    const overall = odIn * 25.4;
+    const secMm = secIn * 25.4;
+    return { ok: true, type: "flotation", width_mm: secMm, aspect: null, rim_in: rimIn,
+             overall_mm: overall, normalized: `${odIn}x${secIn}R${rimIn}`.replace(/\.0\b/g,"") };
+  }
+
+  // 4) Flotation (/): 33/12.5R16  → first number is OD (inches)
+  m = s.match(/^(\d{2}(?:\.\d+)?)\/(\d{1,2}(?:\.\d+)?)R?(\d{2})$/);
+  if (m) {
+    const odIn = parseFloat(m[1]);
+    const secIn = parseFloat(m[2]);
+    const rimIn = parseFloat(m[3]);
+    const overall = odIn * 25.4;
+    const secMm = secIn * 25.4;
+    return { ok: true, type: "flotation", width_mm: secMm, aspect: null, rim_in: rimIn,
+             overall_mm: overall, normalized: `${odIn}/${secIn}R${rimIn}`.replace(/\.0\b/g,"") };
+  }
+
+  // 5) Old inch sizes: 7.50-16, 7.50R16, 6.00-16 → assume 100% profile
+  m = s.match(/^(\d{1,2}(?:\.\d{1,2})?)[\-]?R?(\d{2})$/);
+  if (m) {
+    const widthIn = parseFloat(m[1]);
+    const rimIn   = parseFloat(m[2]);
+    if (widthIn > 0 && widthIn < 16) {
+      const overall = rimIn * 25.4 + 2 * (widthIn * 25.4);
+      return { ok: true, type: "inch100", width_mm: widthIn * 25.4, aspect: 100, rim_in: rimIn,
+               overall_mm: overall, normalized: `${widthIn}R${rimIn}`.replace(/\.0\b/g,"") };
+    }
   }
 
   return { ok: false, reason: "unrecognized format" };
@@ -252,10 +279,10 @@ function saveVehicleDetails() {
   const trackRear       = document.getElementById("trackRear").value.trim();
 
   // Tyres (for Home summary only)
-  const tyreWidth  = document.getElementById("tyreWidth").value.trim();
-  const tyreAspect = document.getElementById("tyreAspect").value.trim();
-  const tyreRim    = document.getElementById("tyreRim").value.trim();
-  const tyrePlacard = (tyreWidth && tyreAspect && tyreRim) ? `${tyreWidth}/${tyreAspect}R${tyreRim}` : "-";
+let tyrePlacard = "-";
+if (window._largestStockTyre) {
+  tyrePlacard = `${window._largestStockTyre.label} (OD ~${window._largestStockTyre.odMm} mm)`;
+}
 
   // Mod codes
   const modCodesRaw = (document.getElementById("modCodes")?.value || "").trim();
@@ -547,45 +574,45 @@ if (resultsTyreEl) {
 }
 
 
-  // Tyre Diameter increase check (>50 mm)
-  // Tyre Diameter (paragraph style, only "Tyre Diameter" coloured)
+ // ---- Tyre Diameter increase check (Home largest vs measured) ----
 const tyreDiaAlert = document.getElementById("tyreDiaAlert");
 if (tyreDiaAlert) {
   tyreDiaAlert.innerHTML = "";
   tyreDiaAlert.className = "result";
 
-  // Home placard (metric numeric fields)
-  const sw = parseFloat(document.getElementById("tyreWidth").value);   // mm
-  const sa = parseFloat(document.getElementById("tyreAspect").value);  // %
-  const sr = parseFloat(document.getElementById("tyreRim").value);     // inches
+  // Largest stock from Home tab
+  const largest = window._largestStockTyre; // { label, odMm } or null
 
-  // Measured (auto-detected metric/imperial string)
+  // Measured tyre from Vehicle Measurements tab
   const measuredStr = document.getElementById("m_tyreSize")?.value || "";
   const p = parseTyreSize(measuredStr);
 
-  if (![sw, sa, sr].some(isNaN) && p?.ok) {
-    const stockDia    = (2 * (sw * sa / 100)) + (sr * 25.4); // mm
-    const measuredDia = p.overall_mm;                        // mm
-    const delta       = measuredDia - stockDia;              // mm
-    const incStr      = `${delta >= 0 ? "+" : ""}${delta.toFixed(0)} mm`;
-    const compliant   = delta <= 50; // increase > 50 mm is NOT compliant
+  if (largest && p?.ok) {
+    const stockDia    = largest.odMm;
+    const measuredDia = Math.round(p.overall_mm);
+    const delta       = measuredDia - stockDia;
+    const incStr      = `${delta >= 0 ? "+" : ""}${delta} mm`;
+    const exceeds     = delta > 50;
+    const headingClr  = exceeds ? "red" : "green";
+    const stockLabel  = "Largest Stock Diameter";
 
-    if (compliant) {
+    if (!exceeds) {
       tyreDiaAlert.innerHTML =
-        `<p><strong><span style="color:green;">Tyre Diameter</span></strong> – ` +
-        `Stock Diameter: ~${stockDia.toFixed(0)} mm, ` +
-        `Measured Diameter: ~${measuredDia.toFixed(0)} mm, ` +
+        `<p><strong><span style="color:${headingClr};">Tyre Diameter</span></strong> – ` +
+        `${stockLabel}: ~${stockDia} mm, ` +
+        `Measured Diameter: ~${measuredDia} mm, ` +
         `Increase: ${incStr} (within 50 mm limit).</p>`;
     } else {
       tyreDiaAlert.innerHTML =
-        `<p><strong><span style="color:red;">Tyre Diameter</span></strong> – ` +
-        `Stock Diameter: ~${stockDia.toFixed(0)} mm, ` +
-        `Measured Diameter: ~${measuredDia.toFixed(0)} mm, ` +
-        `Increase: ${incStr} (exceeds 50 mm limit). ` +
+        `<p><strong><span style="color:${headingClr};">Tyre Diameter</span></strong> – ` +
+        `${stockLabel}: ~${stockDia} mm, ` +
+        `Measured Diameter: ~${measuredDia} mm, ` +
+        `Increase: ${incStr} over 50mm limit. ` +
         `Rectify the tyre diameter to comply with s7.4.D QLVIM and s.4.4, LS9 QCOP.</p>`;
     }
   }
 }
+
 
   // Wheel Track check (≤50 mm = compliant, >50 mm = not compliant)
 const stockTrackFront = parseFloat(document.getElementById("trackFront").value);
@@ -914,6 +941,7 @@ if (out2 && out2.children.length === 0 && query.trim()) {
 }
   }
  // <--- closes searchQLVIM()
+// =====================================================
 // DOMContentLoaded (runs after page load)
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
@@ -924,10 +952,8 @@ document.addEventListener("DOMContentLoaded", () => {
     .catch(err => console.warn("QLVIM_text.json load failed", err));
 
   // ✅ Wire the Mod Codes buttons
-  document.getElementById("modCodeButton")
-    ?.addEventListener("click", showModDescriptions);
-  document.getElementById("modCodeClear")
-    ?.addEventListener("click", clearModCodes);
+  document.getElementById("modCodeButton")?.addEventListener("click", showModDescriptions);
+  document.getElementById("modCodeClear")?.addEventListener("click", clearModCodes);
 
   // 1) Enter → search
   const input = document.getElementById("dartSearch");
@@ -944,14 +970,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const _origSearch = searchQLVIM;
     window.searchQLVIM = function () {
       _origSearch();
-
       const out = document.getElementById("searchResults");
       if (!out) return;
-
       if (out.innerHTML.trim() && !document.getElementById("qlvim-top3-header")) {
         const hdr = document.createElement("div");
         hdr.id = "qlvim-top3-header";
-        hdr.className = "results-header";  // use class instead of inline styles
+        hdr.className = "results-header";
         hdr.textContent = "Top 3 results";
         out.insertBefore(hdr, out.firstChild);
       }
@@ -966,7 +990,6 @@ document.addEventListener("DOMContentLoaded", () => {
     resultsContainer.addEventListener("click", (e) => {
       const btn = e.target.closest(".result-add-btn");
       if (!btn) return;
-
       addToResults(
         btn.dataset.category,
         btn.dataset.sec,
@@ -994,16 +1017,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const compileBtn = document.getElementById("compileBtn");
   if (compileBtn) {
     compileBtn.addEventListener("click", function () {
-      // Run your existing compile function
       compileResults();
-
-      // Update button text + style
       compileBtn.textContent = "Added in results";
       compileBtn.style.backgroundColor = "red";
       compileBtn.style.color = "white";
     });
   }
-// ---- Sway bar (Inspection) ----
+
+  // ---- Sway bar (Inspection) ----
   const swayYes    = document.getElementById("swayYes");
   const swayNo     = document.getElementById("swayNo");
   const swayStatus = document.getElementById("swayStatus");
@@ -1026,28 +1047,29 @@ document.addEventListener("DOMContentLoaded", () => {
       setInspectionLine("res-swaybar", "");
     });
   }
+
   // ---- Shackles (Inspection) ----
-const shackleYes    = document.getElementById("shackleYes");
-const shackleNo     = document.getElementById("shackleNo");
-const shackleStatus = document.getElementById("shackleStatus");
+  const shackleYes    = document.getElementById("shackleYes");
+  const shackleNo     = document.getElementById("shackleNo");
+  const shackleStatus = document.getElementById("shackleStatus");
 
-if (shackleYes) {
-  shackleYes.addEventListener("click", () => {
-    setStatus(shackleStatus, "Issue flagged. Added to Results automatically.", false);
-    setInspectionLine(
-      "res-shackles",
-      `<p><strong><span class="red">Suspension Shackles</span></strong>: ` +
-      `This vehicle is fitted with extended shackles. Re-fit factory shackles as per s6.13.b of QLVIM.</p>`
-    );
-  });
-}
+  if (shackleYes) {
+    shackleYes.addEventListener("click", () => {
+      setStatus(shackleStatus, "Issue flagged. Added to Results automatically.", false);
+      setInspectionLine(
+        "res-shackles",
+        `<p><strong><span class="red">Suspension Shackles</span></strong>: ` +
+        `This vehicle is fitted with extended shackles. Re-fit factory shackles as per s6.13.b of QLVIM.</p>`
+      );
+    });
+  }
 
-if (shackleNo) {
-  shackleNo.addEventListener("click", () => {
-    setStatus(shackleStatus, "Compliant.", true);
-    setInspectionLine("res-shackles", "");
-  });
-}
+  if (shackleNo) {
+    shackleNo.addEventListener("click", () => {
+      setStatus(shackleStatus, "Compliant.", true);
+      setInspectionLine("res-shackles", "");
+    });
+  }
 
   // ---- Body Blocks (Inspection) ----
   const bbYes      = document.getElementById("bbYes");
@@ -1060,25 +1082,22 @@ if (shackleNo) {
   function bbShowFollowup()  { if (bbFollow) bbFollow.style.display = "block"; }
   function bbHideFollowup()  { if (bbFollow) bbFollow.style.display = "none"; }
 
-  
   // Q1: Are body blocks fitted?
-if (bbYes) bbYes.addEventListener("click", () => {
-  if (!hasLS10Mod()) {
-    // No LS10 → fail immediately, no follow-up shown
-    if (bbFollow) bbFollow.style.display = "none";
-    setStatus(bbStatusEl, "Issue flagged. Added to Results automatically.", false);
-    setInspectionLine(
-      "res-body-blocks",
-      `<p><strong><span class="red">Body Blocks</span></strong>: ` +
-      `This vehicle has body blocks. Remove or have this vehicle certified to comply with s.1, LS9, QCOP.</p>`
-    );
-  } else {
-    // LS10 present → now ask the height question
-    if (bbFollow) bbFollow.style.display = "block";
-    setStatus(bbStatusEl, "", true);                 // clear status until Q2 answered
-    setInspectionLine("res-body-blocks", "");        // nothing in Results yet
-  }
-});
+  if (bbYes) bbYes.addEventListener("click", () => {
+    if (!hasLS10Mod()) {
+      if (bbFollow) bbFollow.style.display = "none";
+      setStatus(bbStatusEl, "Issue flagged. Added to Results automatically.", false);
+      setInspectionLine(
+        "res-body-blocks",
+        `<p><strong><span class="red">Body Blocks</span></strong>: ` +
+        `This vehicle has body blocks. Remove or have this vehicle certified to comply with s.1, LS9, QCOP.</p>`
+      );
+    } else {
+      if (bbFollow) bbFollow.style.display = "block";
+      setStatus(bbStatusEl, "", true);
+      setInspectionLine("res-body-blocks", "");
+    }
+  });
 
   if (bbLe50Yes) bbLe50Yes.addEventListener("click", () => {
     if (hasLS10Mod()) {
@@ -1093,34 +1112,36 @@ if (bbYes) bbYes.addEventListener("click", () => {
       );
     }
   });
-  // Q1: No — body blocks not fitted → compliant, hide follow-up, clear any result
-if (bbNo) bbNo.addEventListener("click", () => {
-  if (bbFollow) bbFollow.style.display = "none";
-  setStatus(bbStatusEl, "Compliant.", true);
-  setInspectionLine("res-body-blocks", "");
-});
 
-// Q2: No — NOT ≤ 50 mm (so > 50 mm) → flagged and added to Results
-if (bbLe50No) bbLe50No.addEventListener("click", () => {
-  setStatus(bbStatusEl, "Issue flagged. Added to Results automatically.", false);
-  setInspectionLine(
-    "res-body-blocks",
-    `<p><strong><span class="red">Body Blocks</span></strong>: ` +
-    `This vehicle has body blocks higher than 50 mm fitted and is out of scope for LS9/LS10. ` +
-    `Remove or ensure blocks do not exceed 50 mm in height as per s.1, LS9, QCOP.</p>`
-  );
-});
+  // Q1: No — body blocks not fitted
+  if (bbNo) bbNo.addEventListener("click", () => {
+    if (bbFollow) bbFollow.style.display = "none";
+    setStatus(bbStatusEl, "Compliant.", true);
+    setInspectionLine("res-body-blocks", "");
+  });
+
+  // Q2: No — NOT ≤ 50 mm (so > 50 mm)
+  if (bbLe50No) bbLe50No.addEventListener("click", () => {
+    setStatus(bbStatusEl, "Issue flagged. Added to Results automatically.", false);
+    setInspectionLine(
+      "res-body-blocks",
+      `<p><strong><span class="red">Body Blocks</span></strong>: ` +
+      `This vehicle has body blocks higher than 50 mm fitted and is out of scope for LS9/LS10. ` +
+      `Remove or ensure blocks do not exceed 50 mm in height as per s.1, LS9, QCOP.</p>`
+    );
+  });
+
   // ---- Defect Clearance Wording ----
-const dcLocation = document.getElementById("dcLocation");
-const dcOutput   = document.getElementById("dcOutput");
+  const dcLocation = document.getElementById("dcLocation");
+  const dcOutput   = document.getElementById("dcOutput");
 
-if (dcLocation && dcOutput) {
-  dcLocation.addEventListener("change", () => {
-    const loc = dcLocation.value;
-    let text = "";
+  if (dcLocation && dcOutput) {
+    dcLocation.addEventListener("change", () => {
+      const loc = dcLocation.value;
+      let text = "";
 
-    if (loc === "Carseldine") {
-      text = `
+      if (loc === "Carseldine") {
+        text = `
 <p><strong>Self-Clearance:</strong><br>
 The owner/owner representative must complete the "Defect Notice Clearance Declaration" where indicated on the rear of this notice and return by the due date to;<br>
 TMR COMPLIANCE P.O BOX 212 Carseldine QLD 4034 or rce_bss@tmr.qld.gov.au</p>
@@ -1138,14 +1159,71 @@ Please provide copies of documentation evidence verifying identified defects hav
 <p><strong>Vehicle Use Restriction:</strong><br>
 Vehicle must not be used on a road after the notice is issued other than to move it to –</p>
 `;
+      } else if (loc) {
+        text = `<em>Address for ${loc} not yet configured.</em>`;
+      }
 
-    } else if (loc) {
-      text = `<em>Address for ${loc} not yet configured.</em>`;
+      dcOutput.style.display = text ? "block" : "none";
+      dcOutput.innerHTML = text;
+    });
+  } // <-- CLOSE the DC block here
+
+  // ---- Tyre Calculator (Home Tab) ----
+const tyreInput  = document.getElementById("tyreSizes");
+const tyreBtn    = document.getElementById("calcLargestTyre");
+const tyreResult = document.getElementById("largestTyreResult");
+
+
+// Helper: format one line with inline assumption notes
+function renderLine(p) {
+  const notes = [];
+  if (p.assumed100) notes.push("assumed 100% profile");
+  if (p.assumed82)  notes.push("assumed 82% profile");
+  const noteTxt = notes.length ? ` (${notes.join("; ")})` : "";
+  return `${p.label} \u2192 ~${p.odMm} mm${noteTxt}`;
+}
+
+if (tyreBtn) {
+  tyreBtn.addEventListener("click", () => {
+    const raw = (tyreInput?.value || "").trim();
+    if (!raw) {
+      tyreResult.textContent = "No tyre sizes entered.";
+      window._largestStockTyre = undefined; // user can proceed without tyres
+      return;
     }
 
-    dcOutput.style.display = text ? "block" : "none";
-    dcOutput.innerHTML = text;
+    const items = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+    if (!items.length) {
+      tyreResult.textContent = "No valid tyre sizes detected.";
+      window._largestStockTyre = undefined;
+      return;
+    }
+
+    const parsed = items.map(parseTyreSize).filter(p => p.ok);
+if (!parsed.length) {
+  tyreResult.textContent = "No valid tyre sizes detected.";
+  window._largestStockTyre = undefined;
+  return;
+}
+
+// Sort by OD (mm) descending
+parsed.sort((a, b) => b.overall_mm - a.overall_mm);
+const largest = parsed[0];
+
+// Build output
+let html = `Largest tyre: <strong>${largest.normalized}</strong> (OD ~<strong>${largest.overall_mm.toFixed(0)} mm</strong>)<br><br>`;
+html += `All entered sizes:<br>`;
+html += parsed.map(p => `${p.normalized} → ~${p.overall_mm.toFixed(0)} mm`).join("<br>");
+
+tyreResult.innerHTML = html;
+
+// Store for Save/Results use
+window._largestStockTyre = {
+  label: largest.normalized,
+  odMm: Math.round(largest.overall_mm)
+};
+
   });
 }
 
-}); // <-- end DOMContentLoaded
+}); // <-- ONE AND ONLY closing brace for DOMContentLoaded

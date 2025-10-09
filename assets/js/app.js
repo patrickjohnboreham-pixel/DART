@@ -1225,5 +1225,41 @@ window._largestStockTyre = {
 
   });
 }
+// ---------- Overlay viewer for Help photos and QLVIM ----------
+document.addEventListener("click", (e) => {
+  const link = e.target.closest("a.action");
+  if (!link) return;
+
+  const href = link.getAttribute("href") || "";
+  // Only intercept Help images or QLVIM PDF links
+  if (!href.match(/Help\/helpphoto\d+\.jpg$/i) && !href.match(/QLVIM\.pdf$/i)) return;
+
+  e.preventDefault();
+
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  const content = document.createElement("div");
+  content.className = "overlay-content" + (href.endsWith(".pdf") ? " pdf" : "");
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "close-btn";
+  closeBtn.innerHTML = "&times;";
+  closeBtn.addEventListener("click", () => overlay.remove());
+
+  if (href.endsWith(".jpg")) {
+    const img = document.createElement("img");
+    img.src = href;
+    img.alt = "Help Photo";
+    content.appendChild(img);
+  } else if (href.endsWith(".pdf")) {
+    const iframe = document.createElement("iframe");
+    iframe.src = href;
+    content.appendChild(iframe);
+  }
+
+  content.appendChild(closeBtn);
+  overlay.appendChild(content);
+  document.body.appendChild(overlay);
+});
 
 }); // <-- ONE AND ONLY closing brace for DOMContentLoaded

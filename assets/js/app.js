@@ -39,6 +39,9 @@ function getSnippet(fullText, terms, radius = 140) {
 
 /* ---------------- Tabs ---------------- */
 function openTab(evt, tabName) {
+    // If user manually changes tab, clear the saved lastTab
+  localStorage.removeItem("lastTab");
+
   const contents = document.getElementsByClassName("tab-content");
   for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
 
@@ -951,8 +954,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (lastTab && typeof openTab === "function") {
     // openTab(evt, tabName) – we can safely call it with just the tab name
     openTab(null, lastTab);
-    localStorage.removeItem("lastTab"); // clear after use
-  }
+      }
 
   fetch(`${BASE}assets/QLVIM_text.json?nocache=${Date.now()}`)
     .then(r => r.json())

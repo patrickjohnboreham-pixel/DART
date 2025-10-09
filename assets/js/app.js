@@ -1235,22 +1235,7 @@ window._largestStockTyre = {
 
   });
 }
-// ---------- Open Help photos and QLVIM in new tab (full-screen) ----------
-document.addEventListener("click", (e) => {
-  const target = e.target;
-  if (!(target instanceof Element)) return;
 
-  // Catch Help or QLVIM links only
-  const a = target.closest('#help .help-grid a.action, a.qlvim-link');
-  if (!a) return;
-
-  const href = a.getAttribute("href") || "";
-  if (!href) return;
-
-  // Open in a new browser tab/window
-  e.preventDefault();
-  window.open(href, "_blank", "noopener,noreferrer");
-});
 
 
 }); // <-- ONE AND ONLY closing brace for DOMContentLoaded

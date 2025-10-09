@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_NAME = "dart-v3"; // bump when you deploy new versions
+const CACHE_NAME = "dart-v4"; // bump when you deploy new versions
 
 const PRECACHE = [
   "./",
@@ -54,6 +54,17 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
+    // --- Skip Help photos, viewer pages, and PDFs so they open externally ---
+  const url = new URL(req.url);
+  if (
+    url.origin === self.location.origin &&
+    (url.pathname.startsWith("/Help/") ||
+     url.pathname.startsWith("/viewer/") ||
+     url.pathname.toLowerCase().endsWith(".pdf"))
+  ) {
+    // Let the browser handle these requests directly (no SW intercept)
+    return;
+  }
 
   const isNavigation =
     req.mode === "navigate" ||

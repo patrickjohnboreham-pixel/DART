@@ -946,6 +946,14 @@ if (out2 && out2.children.length === 0 && query.trim()) {
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
   // Load pre-extracted manual text for fallback search
+  // ---------- Restore last tab after returning from external browser ----------
+  const lastTab = localStorage.getItem("lastTab");
+  if (lastTab && typeof openTab === "function") {
+    // openTab(evt, tabName) – we can safely call it with just the tab name
+    openTab(null, lastTab);
+    localStorage.removeItem("lastTab"); // clear after use
+  }
+
   fetch(`${BASE}assets/QLVIM_text.json?nocache=${Date.now()}`)
     .then(r => r.json())
     .then(data => { qlvimText = data; console.log(`QLVIM_text loaded: ${data.length} pages`); })

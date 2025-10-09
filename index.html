@@ -339,7 +339,7 @@
 
 
 
-<script src="assets/js/app.js?v=21" defer></script>
+<script src="assets/js/app.js?v=23" defer></script>
 <script>
 document.addEventListener("click", (e) => {
   const target = e.target;
@@ -350,6 +350,9 @@ document.addEventListener("click", (e) => {
   if (!a) return;
 
   e.preventDefault();
+
+  // 🧭 Save the current tab before leaving (so we can restore it later)
+  localStorage.setItem("lastTab", "help");
 
   // Use special intent URL for Android to open in system browser
   const url = a.href;

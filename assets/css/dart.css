@@ -215,3 +215,69 @@ a.action:hover {
   font-weight: bold;
   text-decoration: none !important; /* 🔑 removes underline */
 }
+/* ---------- Overlay viewer ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.overlay-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.overlay-content img,
+.overlay-content.pdf iframe {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  background: #fff;
+}
+
+/* Bigger canvas for PDF viewer */
+.overlay-content.pdf iframe {
+  width: 90vw;
+  height: 90vh;
+  border: none;
+  border-radius: 8px;
+}
+
+/* Close button */
+.close-btn {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 24px;
+  line-height: 36px;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: rgba(0,0,0,0.75);
+}
+
+/* Small-screen polish */
+@media (max-width: 480px) {
+  .overlay-content { max-width: 96vw; max-height: 92vh; }
+  .overlay-content.pdf iframe { width: 96vw; height: 92vh; }
+}
+
+/* Motion/accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .overlay, .overlay * { transition: none !important; animation: none !important; }
+}

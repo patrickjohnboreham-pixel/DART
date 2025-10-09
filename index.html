@@ -340,5 +340,30 @@
 
 
 <script src="assets/js/app.js?v=21" defer></script>
+<script>
+document.addEventListener("click", (e) => {
+  const target = e.target;
+  if (!(target instanceof Element)) return;
+
+  // Only affect Help and QLVIM links
+  const a = target.closest('#help .help-grid a.action, a.qlvim-link');
+  if (!a) return;
+
+  e.preventDefault();
+
+  // Use special intent URL for Android to open in system browser
+  const url = a.href;
+  if (navigator.userAgent.includes("Android")) {
+    // Force Chrome to open external browser tab outside the PWA window
+    window.location.href = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
+  } else {
+    // Normal fallback for desktop/iOS
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+});
+</script>
+
+
+
 </body>
 </html>

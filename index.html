@@ -298,36 +298,40 @@
 <!-- Help Tab -->
 <div id="help" class="tab-content">
   <h3>Help</h3>
-  <p><em>Tap an image to view it full size in a new tab.</em></p>
+  <p><em>Tap an image or document to open full screen in a new tab.</em></p>
 
   <div class="help-grid">
-    <a href="Help/helpphoto1.jpg" target="_blank" rel="noopener" class="action">Tyre Diameter</a>
-    <a href="Help/helpphoto2.jpg" target="_blank" rel="noopener" class="action">Sway Bar</a>
-    <a href="Help/helpphoto3.jpg" target="_blank" rel="noopener" class="action">Wheel Track</a>
-    <a href="Help/helpphoto4.jpg" target="_blank" rel="noopener" class="action">Suspension Height</a>
-    <a href="Help/helpphoto5.jpg" target="_blank" rel="noopener" class="action">Body Blocks</a>
+    <a href="Help/helpphoto1.jpg" class="action" target="_blank" rel="noopener">Tyre Diameter</a>
+    <a href="Help/helpphoto2.jpg" class="action" target="_blank" rel="noopener">Sway Bar</a>
+    <a href="Help/helpphoto3.jpg" class="action" target="_blank" rel="noopener">Wheel Track</a>
+    <a href="Help/helpphoto4.jpg" class="action" target="_blank" rel="noopener">Suspension Height</a>
+    <a href="Help/helpphoto5.jpg" class="action" target="_blank" rel="noopener">Body Blocks</a>
   </div>
-<h3 style="margin-top:20px;">Reference Documents</h3>
-  
-  <div class="help-grid">
-    <a href="assets/QLVIM.pdf" target="_blank" rel="noopener" class="action">Queensland Light Vehicle Inspection Manual (QLVIM PDF)</a>
-  </div>
-<!-- Defect Clearance Wording -->
-<div class="section" id="defectClearance">
-  <h3>Defect Clearance Wording</h3>
 
-  <label for="dcLocation"><strong>Select Location:</strong></label>
-  <select id="dcLocation" class="action">
-    <option value="" selected disabled>— Select a location —</option>
-    <option value="Bethania">Bethania</option>
-    <option value="Cairns">Cairns</option>
-    <option value="Carseldine">Carseldine</option>
-    <option value="Maroochydore">Maroochydore</option>
-    <option value="Rockhampton">Rockhampton</option>
-    <option value="Southport">Southport</option>
-    <option value="Toowoomba">Toowoomba</option>
-    <option value="Townsville">Townsville</option>
-  </select>
+  <h3 style="margin-top:20px;">Reference Documents</h3>
+  <div class="help-grid">
+    <a href="assets/QLVIM.pdf" class="action" target="_blank" rel="noopener">
+      Queensland Light Vehicle Inspection Manual (QLVIM PDF)
+    </a>
+  </div>
+
+  <!-- Defect Clearance Wording -->
+  <div class="section" id="defectClearance">
+    <h3>Defect Clearance Wording</h3>
+
+    <label for="dcLocation"><strong>Select Location:</strong></label>
+    <select id="dcLocation" class="action">
+      <option value="" selected disabled>— Select a location —</option>
+      <option value="Bethania">Bethania</option>
+      <option value="Cairns">Cairns</option>
+      <option value="Carseldine">Carseldine</option>
+      <option value="Maroochydore">Maroochydore</option>
+      <option value="Rockhampton">Rockhampton</option>
+      <option value="Toowoomba">Toowoomba</option>
+      <option value="Townsville">Townsville</option>
+    </select>
+  </div>
+</div>
 
   <!-- Output (hidden until selection) -->
   <div id="dcOutput" class="result" style="display:none; white-space:pre-wrap; margin-top:12px;"></div>
@@ -335,6 +339,6 @@
 
 
 
-<script src="assets/js/app.js?v=19" defer></script>
+<script src="assets/js/app.js?v=21" defer></script>
 </body>
 </html>

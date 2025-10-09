@@ -339,29 +339,33 @@
 
 
 
-<script src="assets/js/app.js?v=23" defer></script>
+<script src="assets/js/app.js?v=24" defer></script>
 <script>
 document.addEventListener("click", (e) => {
   const target = e.target;
   if (!(target instanceof Element)) return;
 
-  // Only affect Help and QLVIM links
+  // Only affect Help photos + QLVIM links
   const a = target.closest('#help .help-grid a.action, a.qlvim-link');
   if (!a) return;
 
-  e.preventDefault();
-
-  // 🧭 Save the current tab before leaving (so we can restore it later)
+  // Save tab so we return to Help
   localStorage.setItem("lastTab", "help");
 
-  // Use special intent URL for Android to open in system browser
   const url = a.href;
+
   if (navigator.userAgent.includes("Android")) {
-    // Force Chrome to open external browser tab outside the PWA window
+    // ANDROID PWA: open in external Chrome via intent (no popup)
+    e.preventDefault();
     window.location.href = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
   } else {
-    // Normal fallback for desktop/iOS
-    window.open(url, "_blank", "noopener,noreferrer");
+    // DESKTOP / iOS: let the native anchor open the new tab (no window.open)
+    // Ensure attributes are correct, then allow default click to proceed
+    a.target = "_blank";
+    const rel = (a.getAttribute("rel") || "").toLowerCase();
+    if (!rel.includes("noopener")) a.setAttribute("rel", (rel + " noopener").trim());
+    if (!rel.includes("external")) a.setAttribute("rel", (a.getAttribute("rel") + " external").trim());
+    // IMPORTANT: do NOT call preventDefault() here
   }
 });
 </script>

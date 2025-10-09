@@ -1225,40 +1225,22 @@ window._largestStockTyre = {
 
   });
 }
-// ---------- Overlay viewer for Help photos and QLVIM ----------
+// ---------- Open Help photos and QLVIM in new tab (full-screen) ----------
 document.addEventListener("click", (e) => {
-  const a = e.target.closest('a.qlvim-link, #help .help-grid a.action');
+  const target = e.target;
+  if (!(target instanceof Element)) return;
+
+  // Catch Help or QLVIM links only
+  const a = target.closest('#help .help-grid a.action, a.qlvim-link');
   if (!a) return;
 
   const href = a.getAttribute("href") || "";
-  const isPdf = /\.pdf(\?|$)/i.test(href) || /viewer\/viewer\.html/i.test(href);
+  if (!href) return;
+
+  // Open in a new browser tab/window
   e.preventDefault();
-
-  const overlay = document.createElement("div");
-  overlay.className = "overlay";
-
-  const content = document.createElement("div");
-  content.className = "overlay-content" + (isPdf ? " pdf" : "");
-
-  const close = document.createElement("button");
-  close.className = "close-btn";
-  close.innerHTML = "&times;";
-  close.onclick = () => overlay.remove();
-
-  if (isPdf) {
-    const iframe = document.createElement("iframe");
-    iframe.src = href;
-    content.appendChild(iframe);
-  } else {
-    const img = document.createElement("img");
-    img.src = href;
-    img.alt = "";
-    content.appendChild(img);
-  }
-
-  content.appendChild(close);
-  overlay.appendChild(content);
-  document.body.appendChild(overlay);
+  window.open(href, "_blank", "noopener,noreferrer");
 });
+
 
 }); // <-- ONE AND ONLY closing brace for DOMContentLoaded

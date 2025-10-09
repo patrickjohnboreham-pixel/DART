@@ -1227,37 +1227,36 @@ window._largestStockTyre = {
 }
 // ---------- Overlay viewer for Help photos and QLVIM ----------
 document.addEventListener("click", (e) => {
-  const link = e.target.closest("a.action");
-  if (!link) return;
+  const a = e.target.closest('a.qlvim-link, #help .help-grid a.action');
+  if (!a) return;
 
-  const href = link.getAttribute("href") || "";
-  // Only intercept Help images or QLVIM PDF links
-  if (!href.match(/Help\/helpphoto\d+\.jpg$/i) && !href.match(/QLVIM\.pdf$/i)) return;
-
+  const href = a.getAttribute("href") || "";
+  const isPdf = /\.pdf(\?|$)/i.test(href) || /viewer\/viewer\.html/i.test(href);
   e.preventDefault();
 
   const overlay = document.createElement("div");
   overlay.className = "overlay";
+
   const content = document.createElement("div");
-  content.className = "overlay-content" + (href.endsWith(".pdf") ? " pdf" : "");
+  content.className = "overlay-content" + (isPdf ? " pdf" : "");
 
-  const closeBtn = document.createElement("button");
-  closeBtn.className = "close-btn";
-  closeBtn.innerHTML = "&times;";
-  closeBtn.addEventListener("click", () => overlay.remove());
+  const close = document.createElement("button");
+  close.className = "close-btn";
+  close.innerHTML = "&times;";
+  close.onclick = () => overlay.remove();
 
-  if (href.endsWith(".jpg")) {
-    const img = document.createElement("img");
-    img.src = href;
-    img.alt = "Help Photo";
-    content.appendChild(img);
-  } else if (href.endsWith(".pdf")) {
+  if (isPdf) {
     const iframe = document.createElement("iframe");
     iframe.src = href;
     content.appendChild(iframe);
+  } else {
+    const img = document.createElement("img");
+    img.src = href;
+    img.alt = "";
+    content.appendChild(img);
   }
 
-  content.appendChild(closeBtn);
+  content.appendChild(close);
   overlay.appendChild(content);
   document.body.appendChild(overlay);
 });

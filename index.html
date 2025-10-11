@@ -282,33 +282,15 @@
    
 <div id="results" class="tab-content">
   <h3>Results</h3>
-  <!-- Save as PDF -->
-<button 
-  type="button" 
-  class="action" 
-  disabled 
-  title="This feature is currently disabled. Use departmental systems for reporting.">
-  Save Report as PDF
-</button>
-<p style="color: red; margin-top: 8px;"><strong>
-  🚫 This feature is currently disabled in DART.<br>
-  Please use official departmental systems to generate reports.
-</strong></p>
-
-
-<!-- (Optional) include photos note -->
-<div class="photo-note">
-  Photos attached on the “Vehicle Photos” tab will be included.
+ <div id="resultsKey" class="result">
+    <strong><span class="status-ok">Compliant</span></strong> - No issues detected. &nbsp; | &nbsp; 
+    <strong><span class="status-bad">Defective</span></strong> - Non-compliant, rectification required.
 </div>
-
 
 <!-- Where photos will be shown in the Results before printing -->
 <div id="resultsPhotos" class="summary"></div>
 
-  <div id="resultsKey" class="result">
-    <strong><span class="status-ok">Compliant</span></strong> - No issues detected. &nbsp; | &nbsp; 
-    <strong><span class="status-bad">Defective</span></strong> - Non-compliant, rectification required.
-</div>
+  
 
 
     <!-- Saved Vehicle Summary (from Home) -->
@@ -326,6 +308,26 @@
 
   <!-- Tyre Diameter warning (only shows if >50mm increase) -->
   <div id="tyreDiaAlert" class="result"></div>
+
+ <!-- Save as PDF -->
+<button 
+  type="button" 
+  class="action" 
+  disabled 
+  title="This feature is currently disabled. Use departmental systems for reporting.">
+  Save Report as PDF
+</button>
+<p style="color: red; margin-top: 8px;"><strong>
+  🚫 This feature is currently disabled in DART.<br>
+  Please use official departmental systems to generate reports.
+</strong></p>
+
+<p style="font-style: italic; font-size: 0.9em; color: #555; margin-top: 24px;">
+  This tool is independently developed and is not officially endorsed by the Department of Transport and Main Roads.  
+  It is intended as a reference guide only. Users must verify all assessments against current legislation and policy.  
+  The developer accepts no responsibility for misuse or incorrect use.  
+  DART is currently in active development and may be subject to ongoing updates and changes.
+</p>
 
 </div>
 

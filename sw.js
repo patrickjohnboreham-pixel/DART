@@ -1,5 +1,5 @@
 // sw.js — DART auto-update service worker
-const APP_VERSION = '2025-10-11_02'; // bump each deploy
+const APP_VERSION = '2025-10-11_03'; // bump each deploy
 const STATIC_CACHE = `dart-static-${APP_VERSION}`;
 
 const PRECACHE = [

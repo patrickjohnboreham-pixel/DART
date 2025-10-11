@@ -948,6 +948,13 @@ if (out2 && out2.children.length === 0 && query.trim()) {
 // DOMContentLoaded (runs after page load)
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
+    // ---- Disclaimer Check ----
+  if (localStorage.getItem("dartDisclaimerAccepted") !== "true") {
+    document.getElementById("disclaimerModal").style.display = "block";
+    document.body.style.overflow = "hidden"; // Prevent background scroll
+    return; // Halt other scripts until disclaimer accepted
+  }
+
   // Load pre-extracted manual text for fallback search
   // ---------- Restore last tab after returning from external browser ----------
   const lastTab = localStorage.getItem("lastTab");
@@ -1239,3 +1246,15 @@ window._largestStockTyre = {
 
 
 }); // <-- ONE AND ONLY closing brace for DOMContentLoaded
+// ---- Disclaimer Button Actions ----
+function acceptDisclaimer() {
+  localStorage.setItem("dartDisclaimerAccepted", "true");
+  document.getElementById("disclaimerModal").style.display = "none";
+  document.body.style.overflow = "";
+  location.reload(); // Force re-run of DOMContentLoaded to load DART
+}
+
+function rejectDisclaimer() {
+  alert("You must accept the disclaimer to use this tool.");
+  window.location.href = "https://www.qld.gov.au/transport";
+}

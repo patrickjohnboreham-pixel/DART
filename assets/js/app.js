@@ -684,12 +684,13 @@ function answerSwayBar(isYes) {
 
 
   // ---------- Data loaders (BASE + JSONs) ----------
-const BASE = location.pathname.includes("/DART/") ? "/DART/" : "./";
+const ASSET_BASE = location.pathname.includes("/DART/") ? "/DART/" : "./";
+
 
 // ---- Mod codes map ----
 window.modCodeDescriptions = {}; // exists even if fetch fails
 
-fetch(`${BASE}assets/mod-codes.json?v=2`, { cache: "no-store" })
+fetch(`${ASSET_BASE}assets/mod-codes.json?v=2`, { cache: "no-store" })
   .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
   .then(data => {
     // Accept object map OR array of {code, desc}
@@ -706,7 +707,7 @@ fetch(`${BASE}assets/mod-codes.json?v=2`, { cache: "no-store" })
   .catch(err => console.warn("Could not load mod-codes.json; showing 'Unknown code'.", err));
 
 // ---- QLVIM mapping ----
-const QLVIM_URL = `${BASE}assets/QLVIM_mapping.json?nocache=${Date.now()}`;
+const QLVIM_URL = `${ASSET_BASE}assets/QLVIM_mapping.json?nocache=${Date.now()}`;
 
 fetch(QLVIM_URL, { cache: "no-store" })
   .then(r => (r.ok ? r.json() : Promise.reject(r.status)))

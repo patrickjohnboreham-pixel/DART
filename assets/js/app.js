@@ -294,13 +294,7 @@ if (window._largestStockTyre) {
     ? modCodesRaw.split(",").map(c => c.trim().toUpperCase()).filter(Boolean)
     : [];
 
-  // Validate required vehicle fields
-  if (!rego || !make || !model || !year || !approval) {
-    document.getElementById("vehicleSummary").innerHTML =
-      `<span style="color:red;">Please fill in all vehicle detail fields.</span>`;
-    return;
-  }
-
+  
   // Mod codes block
   const modCodesSection = `
     <h4 style="color:blue;">Engineering Mod Codes</h4>

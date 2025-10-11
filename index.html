@@ -28,7 +28,7 @@
 
 <!-- Banner -->
 <div id="banner">
-  <h1>Defect Assessment and Reporting Tool</h1>
+  <h1>Defect Assessment and Reporting MCTooly</h1>
   <h2>DART</h2>
 </div>
 
@@ -409,42 +409,39 @@ document.addEventListener("click", (e) => {
 });
 </script>
 <!-- 🔄 DART auto-update service worker -->
+<!-- 🔄 DART auto-update service worker -->
 <script>
-const BUILD = '2025-10-11_05'; // bump on each deploy
+const BUILD = '2025-10-11_08'; // bump each deploy
+const BASE = location.pathname.includes('/DART/') ? '/DART/' : '/';
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-    const SW_PATH = location.pathname.includes('/DART/') ? '/DART/sw.js' : '/sw.js';
-const reg = await navigator.serviceWorker.register(`${SW_PATH}?v=${BUILD}`);
+  navigator.serviceWorker.register(`${BASE}sw.js?v=${BUILD}`, { scope: BASE }).then(reg => {
 
-      const check = () => reg.update().catch(()=>{});
-      check();
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) check();
-      });
+    // Update checker (optional)
+    const check = () => reg.update().catch(()=>{});
+    check();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) check();
+    });
 
-      let reloaded = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!reloaded) { reloaded = true; location.reload(); }
-      });
+    // Force activate new SW immediately
+    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
 
-      if (reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
-      reg.addEventListener('updatefound', () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && reg.waiting) {
-            reg.waiting.postMessage({type:'SKIP_WAITING'});
-          }
-        });
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      nw?.addEventListener('statechange', () => {
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+          nw.postMessage({ type: 'SKIP_WAITING' });
+        }
       });
-    } catch(err) {
-      console.error('SW registration failed:', err);
-    }
-  });
+    });
+
+    // Reload when new worker takes control
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+  }).catch(err => console.error('SW registration failed:', err));
 }
 </script>
+
 
 
 

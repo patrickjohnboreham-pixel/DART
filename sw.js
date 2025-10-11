@@ -1,16 +1,20 @@
 // sw.js — DART auto-update service worker
-const APP_VERSION = '2025-10-11_03'; // bump each deploy
+// sw.js — DART auto-update service worker
+const APP_VERSION = '2025-10-11_06'; // bump each deploy
 const STATIC_CACHE = `dart-static-${APP_VERSION}`;
 
+// Detect correct base path (works for GitHub Pages under /DART/ or locally)
+const BASE = new URL(self.registration.scope).pathname.replace(/\/+$/, '/') || '/';
+
 const PRECACHE = [
-  '/', // Root shell
-  '/index.html',
-  '/assets/css/dart.css?v=5',
-  '/assets/js/app.js?v=25',
-  '/assets/QLVIM_text.json',
-  '/assets/QLVIM.pdf',
-  '/viewer/viewer.html',
-  '/manifest.json?v=4'
+  `${BASE}`,
+  `${BASE}index.html`,
+  `${BASE}assets/css/dart.css?v=${APP_VERSION}`,
+  `${BASE}assets/js/app.js?v=${APP_VERSION}`,
+  `${BASE}assets/QLVIM_text.json?v=${APP_VERSION}`,
+  `${BASE}assets/QLVIM.pdf?v=${APP_VERSION}`,
+  `${BASE}viewer/viewer.html?v=${APP_VERSION}`,
+  `${BASE}manifest.json?v=${APP_VERSION}`
 ];
 
 // --- Install ---

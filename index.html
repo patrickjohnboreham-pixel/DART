@@ -17,7 +17,8 @@
     <p>
       This tool is independently developed and is not officially endorsed by the Department of Transport and Main Roads. 
       It is intended as a reference guide only. Users must verify all assessments against current legislation and policy. 
-      The developer accepts no responsibility for misuse or incorrect use.
+      The developer accepts no responsibility for misuse or incorrect use. DART is currently in active development and may be
+      subject to ongoing updates and changes.
     </p>
     <p><strong>Do you accept and agree to use this tool as intended?</strong></p>
     <button onclick="acceptDisclaimer()" style="margin: 10px; padding:10px 20px;">I Agree</button>
@@ -65,7 +66,7 @@
   <p><em>Enter the details of the inspected vehicle.</em></p>
 
   <label>Registration:</label>
-  <input type="text" id="rego" placeholder="e.g. SIK4X4"><br>
+<input type="text" id="rego" placeholder="Feature disabled" disabled><br>
 
   <label>Make:</label>
   <input type="text" id="make" placeholder="e.g. Toyota"><br>
@@ -127,8 +128,8 @@
 <!-- Save Details -->
 <button type="button" class="action" onclick="saveVehicleDetails()">Save Details</button>
 <p class="footer-note">
-    This application was developed by TI P Boreham.  
-    Enquiries and feedback: <a href="mailto:patrick.j.boreham@tmr.qld.gov.au">patrick.j.boreham@tmr.qld.gov.au</a>
+    This application was developed by P Boreham.  
+    Enquiries and feedback: <a href="mailto:patrickjohnboreham@gmail.com">patrickjohnboreham@.gmail.com</a>
 </p>
 
 <div id="vehicleSummary" class="summary"></div>
@@ -264,8 +265,16 @@
 <!-- Vehicle Photos Tab -->
 <div id="photos" class="tab-content">
   <h3>Upload Vehicle Photos</h3>
-  <p><em>Attach images of the inspected 4x4 vehicle (optional).</em></p>
-  <input type="file" accept="image/*" capture="environment" multiple>
+  <p style="color: red; font-weight: bold;">
+    🚫 Photo uploads are currently disabled. Please use departmental systems for image capture.
+  </p>
+  <input 
+    type="file" 
+    accept="image/*" 
+    capture="environment" 
+    multiple 
+    disabled 
+    title="This feature is disabled in the current version of DART.">
 </div>
 
 
@@ -274,7 +283,18 @@
 <div id="results" class="tab-content">
   <h3>Results</h3>
   <!-- Save as PDF -->
-<button type="button" class="action" onclick="saveReportPDF()">Save Report as PDF</button>
+<button 
+  type="button" 
+  class="action" 
+  disabled 
+  title="This feature is currently disabled. Use departmental systems for reporting.">
+  Save Report as PDF
+</button>
+<p style="color: red; margin-top: 8px;"><strong>
+  🚫 This feature is currently disabled in DART.<br>
+  Please use official departmental systems to generate reports.
+</strong></p>
+
 
 <!-- (Optional) include photos note -->
 <div class="photo-note">
@@ -331,20 +351,23 @@
 
   <!-- Defect Clearance Wording -->
   <div class="section" id="defectClearance">
-    <h3>Defect Clearance Wording</h3>
+  <h3>Defect Clearance Wording</h3>
 
-    <label for="dcLocation"><strong>Select Location:</strong></label>
-    <select id="dcLocation" class="action">
-      <option value="" selected disabled>— Select a location —</option>
-      <option value="Bethania">Bethania</option>
-      <option value="Cairns">Cairns</option>
-      <option value="Carseldine">Carseldine</option>
-      <option value="Maroochydore">Maroochydore</option>
-      <option value="Rockhampton">Rockhampton</option>
-      <option value="Toowoomba">Toowoomba</option>
-      <option value="Townsville">Townsville</option>
-    </select>
-  </div>
+  <label for="dcLocation"><strong>Select Location:</strong></label>
+  <select id="dcLocation" class="action" disabled title="This feature is currently disabled. Use official TMR templates.">
+    <option value="" selected disabled>— Select a location —</option>
+    <option value="Bethania">Bethania</option>
+    <option value="Cairns">Cairns</option>
+    <option value="Carseldine">Carseldine</option>
+    <option value="Maroochydore">Maroochydore</option>
+    <option value="Rockhampton">Rockhampton</option>
+    <option value="Toowoomba">Toowoomba</option>
+    <option value="Townsville">Townsville</option>
+  </select>
+
+  <p style="color: red; margin-top: 8px;"><strong>🚫 This section is disabled in the current version of DART.<br>Please use the official departmental resources for clearance instructions.</strong></p>
+</div>
+
 </div>
 
 <!-- Output (hidden until selection) -->
@@ -353,7 +376,7 @@
 
 
 
-<script src="assets/js/app.js?v=25" defer></script>
+<script src="assets/js/app.js?v=30" defer></script>
 <script>
 document.addEventListener("click", (e) => {
   const target = e.target;
@@ -382,6 +405,43 @@ document.addEventListener("click", (e) => {
     // IMPORTANT: do NOT call preventDefault() here
   }
 });
+</script>
+<!-- 🔄 DART auto-update service worker -->
+<script>
+const BUILD = '2025-10-11_02'; // bump on each deploy
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+    const SW_PATH = location.pathname.includes('/DART/') ? '/DART/sw.js' : '/sw.js';
+const reg = await navigator.serviceWorker.register(`${SW_PATH}?v=${BUILD}`);
+
+      const check = () => reg.update().catch(()=>{});
+      check();
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) check();
+      });
+
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!reloaded) { reloaded = true; location.reload(); }
+      });
+
+      if (reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && reg.waiting) {
+            reg.waiting.postMessage({type:'SKIP_WAITING'});
+          }
+        });
+      });
+    } catch(err) {
+      console.error('SW registration failed:', err);
+    }
+  });
+}
 </script>
 
 

@@ -1,6 +1,7 @@
 
 'use strict';              // optional but recommended
 
+
 // ---- Globals ----
 let qlvimData = [];
 let swayBarIssue = null;   // null = unanswered, true = issue, false = compliant
@@ -687,15 +688,6 @@ function answerSwayBar(isYes) {
   }
 }
 
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('./service-worker.js', { scope: './' })
-        .then(r => console.log('SW scope:', r.scope))
-        .catch(e => console.error('SW registration failed', e));
-    });
-  }
 
   // ---------- Data loaders (BASE + JSONs) ----------
 const BASE = location.pathname.includes("/DART/") ? "/DART/" : "./";

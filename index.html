@@ -115,7 +115,7 @@
   <input type="number" id="trackRear" placeholder="e.g. 1620"><br>
 
   <h3>Tyre Sizes</h3>
-<p><em>Enter multiple sizes, one per line or separated by commas (optional).</em></p>
+<p><em>Enter multiple sizes from Tyre placard or RVD, one per line or separated by commas.</em></p>
 <textarea id="tyreSizes" rows="5" style="width:100%; max-width:480px;" placeholder="205/80R16
 7.50R16
 255/70R15LT
@@ -378,7 +378,7 @@
 
 
 
-<script src="assets/js/app.js?v=33" defer></script>
+<script src="assets/js/app.js?v=42" defer></script>
 <script>
 document.addEventListener("click", (e) => {
   const target = e.target;
@@ -411,7 +411,7 @@ document.addEventListener("click", (e) => {
 <!-- 🔄 DART auto-update service worker -->
 <!-- 🔄 DART auto-update service worker -->
 <script>
-const BUILD = '2025-10-11_08'; // bump each deploy
+const BUILD = '2025-10-11_09'; // bump each deploy
 const BASE = location.pathname.includes('/DART/') ? '/DART/' : '/';
 
 if ('serviceWorker' in navigator) {

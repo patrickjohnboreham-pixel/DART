@@ -9,6 +9,43 @@ let shackleIssue = null; // null = unanswered, true = issue, false = compliant
 
 // ---- QLVIM text fallback + synonyms ----
 let qlvimText = [];
+// ==== SECURITY HELPERS (add here) ====
+// Minimal escaping for user-supplied text
+function escapeHTML(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+// Guard URLs used in <a href="...">
+function safeHref(url) {
+  try {
+    const u = new URL(url, location.origin);
+    if (u.protocol === "http:" || u.protocol === "https:") return u.href;
+  } catch {}
+  return "about:blank";
+}
+
+// Optional: DOM builder for future safe rendering (not mandatory yet)
+function el(tag, props = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k,v] of Object.entries(props)) {
+    if (k === "class") node.className = v;
+    else if (k === "text") node.textContent = v;
+    else if (k === "html") node.innerHTML = v; // only with trusted content
+    else node.setAttribute(k, v);
+  }
+  for (const c of [].concat(children)) {
+    if (c == null) continue;
+    node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  }
+  return node;
+}
+// ==== END SECURITY HELPERS ====
+
 // ---- Mod code maps (loaded from JSON) ----
 window.modLight = {};           // e.g. { LA1: "Equivalent engine installation", ... }
 window.modHeavy = {};           // e.g. { A1: "Engine substitution", ... }
@@ -33,7 +70,7 @@ function expandTerms(term) {
 }
 
 // Highlight a short snippet around the hit
-function getSnippet(fullText, terms, radius = 140) {
+  function getSnippet(fullText, terms, radius = 140) {
   const hay = fullText.toLowerCase();
   let hit = -1;
   for (const t of terms) { const i = hay.indexOf(t); if (i !== -1) { hit = i; break; } }
@@ -107,7 +144,7 @@ function extractSectionRef(text) {
   return `s${token}`;
 }
 // Get a readable one-line snippet around the first matching term
-function getSnippet(fullText, needles) {
+function getSnippetLine(fullText, needles) {
   const text = String(fullText || "");
   const lower = text.toLowerCase();
   const term = needles.find(n => lower.includes(n)) || "";
@@ -125,31 +162,43 @@ function getSnippet(fullText, needles) {
 }
 // Same card UI as mapped results
 function renderResultCard(item, out, idx = 0) {
-  // item: { category, clause, page, linkText, linkHref, dataSection }
+   const safeLink = safeHref(item.linkHref);  // ✅ validate URL
   const noteId = `note-${Date.now()}-${idx}`;
   const wrap = document.createElement("div");
   wrap.className = "result-item";
+
   wrap.innerHTML = `
     <div>
-      <strong><span class="category-pill">${(item.category || "Uncategorized")}</span></strong>
-      – ${item.clause}
+      <strong><span class="category-pill">${escapeHTML(item.category || "Uncategorized")}</span></strong>
+      – ${escapeHTML(item.clause || "")}
       – ensure vehicle complies with
-      <strong><a class="qlvim-link" href="${item.linkHref}" target="_blank" rel="noopener">${item.linkText}</a></strong>
+      <strong>
+        <a class="qlvim-link" href="${safeLink}"
+           target="_blank" rel="noopener noreferrer">
+           ${escapeHTML(item.linkText || "")}
+        </a>
+      </strong>
       of QLVIM.
     </div>
-    <div class="result-note"><em>Note:</em> <input id="${noteId}" class="note-input" type="text" placeholder="optional note"></div>
+    <div class="result-note">
+      <em>Note:</em>
+      <input id="${noteId}" class="note-input" type="text" placeholder="optional note">
+    </div>
     <div class="result-actions">
       <button type="button" class="action result-add-btn"
-        data-category="${(item.category || "Uncategorized").replace(/"/g,'&quot;')}"
-        data-sec="${(item.dataSection || "").replace(/"/g,'&quot;')}"
-        data-clause="${(item.clause || "").replace(/"/g,'&quot;')}"
-        data-page="${item.page}"
-        data-note-id="${noteId}"
-      >Add to Results</button>
+        data-category="${escapeHTML(item.category || "Uncategorized")}"
+        data-sec="${escapeHTML(item.dataSection || "")}"
+        data-clause="${escapeHTML(item.clause || "")}"
+        data-page="${escapeHTML(item.page)}"
+        data-note-id="${noteId}">
+        Add to Results
+      </button>
     </div>
   `;
+
   out.appendChild(wrap);
 }
+
 
 
 // Add the fallback item into the Results tab and flip the button state
@@ -193,8 +242,8 @@ const needles  = expanded.map(s => s.toLowerCase());
   if (!resultsEl) return false;
 
   pageHits.forEach(pageHit => {
-   const snippet = getSnippet(pageHit.text, needles);
-    const link = qlvimLink(pageHit.page);
+   const snippet = getSnippetLine(pageHit.text, needles);
+    const link     = safeHref(qlvimLink(pageHit.page));  // ✅ use the scoped page
     const sectionRef = extractSectionRef(pageHit.text);
 // Make Info Sheets look the same too
 const isInfo = /information sheet/i.test((pageHit.title || pageHit.Heading || "") + " " + pageHit.text);
@@ -346,56 +395,60 @@ function updateMeasuredTyrePreview() {
 
 /* ---------------- Save Vehicle Details ---------------- */
 function saveVehicleDetails() {
-  // Basic details
-  const rego     = document.getElementById("rego").value.trim();
-  const make     = document.getElementById("make").value.trim();
-  const model    = document.getElementById("model").value.trim();
-  const year     = document.getElementById("year").value.trim();
-  const approval = document.getElementById("approval").value.trim();
+  // Basic details (escaped)
+const rego     = escapeHTML((document.getElementById("rego").value || "").trim());
+const make     = escapeHTML((document.getElementById("make").value || "").trim());
+const model    = escapeHTML((document.getElementById("model").value || "").trim());
+const year     = escapeHTML((document.getElementById("year").value || "").trim());
+const approval = escapeHTML((document.getElementById("approval").value || "").trim());
 
-  // Suspension & Track (for Home summary only)
-  const suspensionFront = document.getElementById("suspensionFront").value.trim();
-  const suspensionRear  = document.getElementById("suspensionRear").value.trim();
-  const trackFront      = document.getElementById("trackFront").value.trim();
-  const trackRear       = document.getElementById("trackRear").value.trim();
+// Suspension & Track (for Home summary only) — escaped
+const suspensionFront = escapeHTML((document.getElementById("suspensionFront").value || "").trim());
+const suspensionRear  = escapeHTML((document.getElementById("suspensionRear").value || "").trim());
+const trackFront      = escapeHTML((document.getElementById("trackFront").value || "").trim());
+const trackRear       = escapeHTML((document.getElementById("trackRear").value || "").trim());
+
 
   // Tyres (for Home summary only)
 let tyrePlacard = "-";
 if (window._largestStockTyre) {
-  tyrePlacard = `${window._largestStockTyre.label} (OD ~${window._largestStockTyre.odMm} mm)`;
+  const lbl = escapeHTML(window._largestStockTyre.label || "");
+  const od  = Number(window._largestStockTyre.odMm) || 0;
+  tyrePlacard = `${lbl} (OD ~${od} mm)`;
 }
 
-  // Mod codes
-  const modCodesRaw = (document.getElementById("modCodes")?.value || "").trim();
-  const modCodes = modCodesRaw
-    ? modCodesRaw.split(",").map(c => c.trim().toUpperCase()).filter(Boolean)
-    : [];
 
-  
-  // Mod codes block (light + heavy visual)
+  // Mod codes (safe version)
+const modCodesRaw = (document.getElementById("modCodes")?.value || "").trim();
+const modCodes = modCodesRaw
+  ? modCodesRaw.split(",").map(c => c.trim().toUpperCase()).filter(Boolean)
+  : [];
+
+// Mod codes block (light + heavy visual, escaped)
 const modCodesSection = `
   <h4 style="color:blue;">Engineering Mod Codes</h4>
   ${
     modCodes.length
       ? `<ul>${
           modCodes.map(code => {
-            const c = code.trim().toUpperCase();
+            const c = normCode(code);
             const isHeavy = !!window.modHeavy?.[c];
             const title = window.modCodeDescriptions?.[c];
             if (title) {
               if (isHeavy) {
-                return `<li><span style="color:red;"><strong>${c}</strong>: ${title} – Heavy vehicle mod code fitted</span></li>`;
+                return `<li><span style="color:red;"><strong>${escapeHTML(c)}</strong>: ${escapeHTML(title)} – Heavy vehicle mod code fitted</span></li>`;
               } else {
-                return `<li><strong>${c}</strong>: ${title}</li>`;
+                return `<li><strong>${escapeHTML(c)}</strong>: ${escapeHTML(title)}</li>`;
               }
             } else {
-              return `<li><strong>${c}</strong>: <span style="color:red;">Unknown code</span></li>`;
+              return `<li><strong>${escapeHTML(c)}</strong>: <span style="color:red;">Unknown code</span></li>`;
             }
           }).join("")
         }</ul>`
       : `<p><em>No Codes Found</em></p>`
   }
 `;
+
 
 
   const now = new Date();
@@ -866,26 +919,38 @@ function setStatus(el, text, ok) {
   el.className = `result ${ok ? 'green' : 'red'}`;
 }
 
-function setInspectionLine(lineId, htmlOrEmpty) {
+// Safer: only inject trusted HTML, default to textContent
+function setInspectionLine(lineId, content, { asHtml = false } = {}) {
   const container = document.getElementById("inspectionResults");
   if (!container) return;
 
   let line = document.getElementById(lineId);
-  if (!htmlOrEmpty) { if (line) line.remove(); return; }
-  if (!line) { 
+  if (!content) { if (line) line.remove(); return; }
+
+  if (!line) {
     line = document.createElement("div");
     line.id = lineId;
-    container.appendChild(line); 
+    container.appendChild(line);
   }
-  line.innerHTML = htmlOrEmpty;
+
+  if (asHtml) {
+    // only pass trusted, app-generated HTML here
+    line.innerHTML = content;
+  } else {
+    // treat everything else as plain text
+    line.textContent = typeof content === "string" ? content : String(content);
+  }
 }
+
 
 
 // Append a selected result to the Results tab (Inspection results area)
 function addToResults(title, section, clause, page, noteInputId, btn) {
-  const note = (document.getElementById(noteInputId)?.value || "").trim();
-  const link = qlvimLink(page);
-  const secText = `s${section}`;
+  const noteRaw  = (document.getElementById(noteInputId)?.value || "").trim();
+  const noteSafe = escapeHTML(noteRaw);
+  const link     = safeHref(qlvimLink(page));   // <-- use 'page' here
+
+  const secText  = `s${section}`;
 
   const resultsDiv = document.getElementById("inspectionResults");
   if (!resultsDiv) return;
@@ -893,22 +958,22 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
   const row = document.createElement("div");
   row.style.margin = "8px 0";
   row.innerHTML = `
-    <strong><a href="${link}" target="_blank" rel="noopener" style="color:red;">${title}</a></strong>
-    – ${clause}
+    <strong><a href="${link}" target="_blank" rel="noopener noreferrer" style="color:red;">${escapeHTML(title)}</a></strong>
+    – ${escapeHTML(clause)}
     – ensure vehicle complies with
-    <strong><a href="${link}" target="_blank" rel="noopener" style="color:blue; text-decoration:underline;">[${secText}]</a></strong>
-    of QLVIM.${note ? ` <em>Note: ${note.replace(/</g,"&lt;")}</em>` : "" }
+    <strong><a href="${link}" target="_blank" rel="noopener noreferrer" style="color:blue; text-decoration:underline;">[${escapeHTML(secText)}]</a></strong>
+    of QLVIM.${noteSafe ? ` <em>Note: ${noteSafe}</em>` : ""}
   `;
   resultsDiv.appendChild(row);
 
-  // 🔴 Change the button colour + text when clicked
   if (btn) {
     btn.style.background = "red";
     btn.textContent = "Added to Results";
-    btn.disabled = true; // stops clicking twice
+    btn.disabled = true;
   }
 }
 
+  
   // ---------- Search ----------
   function searchQLVIM() {
     const q = (document.getElementById("dartSearch")?.value || "").trim().toLowerCase();
@@ -1103,7 +1168,9 @@ if (aPhraseOnly !== bPhraseOnly) return aPhraseOnly ? 1 : -1; // push phrase-onl
 
   const clause   = (it.clause   || it.Clause   || "").trim();
 
-  const link    = qlvimLink(page);
+ const link = safeHref(qlvimLink(page));          // ✅ use the local 'page'
+
+
   const secText = `s${sec}`;
 
   const wrap = document.createElement("div");
@@ -1114,7 +1181,7 @@ wrap.innerHTML = `
     <strong><span class="category-pill">${category}</span></strong>
     – ${clause}
     – ensure vehicle complies with
-    <strong><a class="qlvim-link" href="${link}" target="_blank" rel="noopener">[${secText}]</a></strong>
+   <strong><a class="qlvim-link" href="${link}" target="_blank" rel="noopener noreferrer">[${secText}]</a></strong>
     of QLVIM.
   </div>
 
@@ -1263,7 +1330,8 @@ document.addEventListener("DOMContentLoaded", () => {
         "res-swaybar",
         `<p><strong><span class="red">Sway bar</span></strong>: ` +
         `One or more components broken, loose, unduly worn, disconnected, or removed. ` +
-        `Rectify as per s.6.14 of QLVIM.</p>`
+        `Rectify as per s.6.14 of QLVIM.</p>`,
+        { asHtml: true } 
       );
     });
   }
@@ -1286,7 +1354,8 @@ document.addEventListener("DOMContentLoaded", () => {
       setInspectionLine(
         "res-shackles",
         `<p><strong><span class="red">Suspension Shackles</span></strong>: ` +
-        `This vehicle is fitted with extended shackles. Re-fit factory shackles as per s6.13.b of QLVIM.</p>`
+        `This vehicle is fitted with extended shackles. Re-fit factory shackles as per s6.13.b of QLVIM.</p>`,
+        { asHtml: true } 
       );
     });
   }
@@ -1317,7 +1386,8 @@ document.addEventListener("DOMContentLoaded", () => {
       setInspectionLine(
         "res-body-blocks",
         `<p><strong><span class="red">Body Blocks</span></strong>: ` +
-        `This vehicle has body blocks. Remove or have this vehicle certified to comply with s.1, LS9, QCOP.</p>`
+        `This vehicle has body blocks. Remove or have this vehicle certified to comply with s.1, LS9, QCOP.</p>`,
+        { asHtml: true } 
       );
     } else {
       if (bbFollow) bbFollow.style.display = "block";
@@ -1335,7 +1405,8 @@ document.addEventListener("DOMContentLoaded", () => {
       setInspectionLine(
         "res-body-blocks",
         `<p><strong><span class="red">Body Blocks</span></strong>: ` +
-        `This vehicle has body blocks. Remove or have this vehicle certified to comply with s.1, LS9, QCOP.</p>`
+        `This vehicle has body blocks. Remove or have this vehicle certified to comply with s.1, LS9, QCOP.</p>`,
+        { asHtml: true } 
       );
     }
   });
@@ -1354,7 +1425,8 @@ document.addEventListener("DOMContentLoaded", () => {
       "res-body-blocks",
       `<p><strong><span class="red">Body Blocks</span></strong>: ` +
       `This vehicle has body blocks higher than 50 mm fitted and is out of scope for LS9/LS10. ` +
-      `Remove or ensure blocks do not exceed 50 mm in height as per s.1, LS9, QCOP.</p>`
+      `Remove or ensure blocks do not exceed 50 mm in height as per s.1, LS9, QCOP.</p>`,
+      { asHtml: true } 
     );
   });
 

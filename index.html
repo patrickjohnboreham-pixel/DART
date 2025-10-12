@@ -20,9 +20,12 @@
       The developer accepts no responsibility for misuse or incorrect use. DART is currently in active development and may be
       subject to ongoing updates and changes.
     </p>
+     <p id="buildVersion" style="font-size:0.9em; color:#ccc; margin-top:10px;"></p>
     <p><strong>Do you accept and agree to use this tool as intended?</strong></p>
     <button onclick="acceptDisclaimer()" style="margin: 10px; padding:10px 20px;">I Agree</button>
     <button onclick="rejectDisclaimer()" style="margin: 10px; padding:10px 20px; background:#f44336; color:#fff;">I Do Not Agree</button>
+   
+
   </div>
 </div>
 
@@ -378,7 +381,7 @@
 
 
 
-<script src="assets/js/app.js?v=42" defer></script>
+<script src="assets/js/app.js?v=43" defer></script>
 <script>
 document.addEventListener("click", (e) => {
   const target = e.target;
@@ -411,7 +414,7 @@ document.addEventListener("click", (e) => {
 <!-- 🔄 DART auto-update service worker -->
 <!-- 🔄 DART auto-update service worker -->
 <script>
-const BUILD = '2025-10-11_09'; // bump each deploy
+const BUILD = '2025-10-11_11'; // bump each deploy
 const BASE = location.pathname.includes('/DART/') ? '/DART/' : '/';
 
 if ('serviceWorker' in navigator) {

@@ -1,7 +1,7 @@
 
 'use strict';              // optional but recommended
 
-
+const BUILD = "2025-10-12_11";  // bump this each time you deploy
 // ---- Globals ----
 let qlvimData = [];
 let swayBarIssue = null;   // null = unanswered, true = issue, false = compliant
@@ -1545,3 +1545,11 @@ function rejectDisclaimer() {
   alert("You must accept the disclaimer to use this tool.");
   window.location.href = "https://www.qld.gov.au/transport";
 }
+// === Display build version in disclaimer ===
+document.addEventListener("DOMContentLoaded", () => {
+  const el = document.getElementById("buildVersion");
+  if (el && typeof BUILD !== "undefined") {
+    el.textContent = `Build version: ${BUILD}`;
+  }
+});
+

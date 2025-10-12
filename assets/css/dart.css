@@ -281,3 +281,9 @@ a.action:hover {
 @media (prefers-reduced-motion: reduce) {
   .overlay, .overlay * { transition: none !important; animation: none !important; }
 }
+#buildVersion {
+  color: #000;          /* black text */
+  font-weight: bold;    /* bold */
+  font-size: 14px;      /* optional, keeps it readable */
+  margin-top: 8px;      /* slight spacing */
+}

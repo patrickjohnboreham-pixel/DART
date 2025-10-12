@@ -1,6 +1,6 @@
 // sw.js — DART auto-update service worker
 // sw.js — DART auto-update service worker
-const APP_VERSION = '2025-10-11_11'; // bump each deploy
+const APP_VERSION = '2025-10-11_12'; // bump each deploy
 const STATIC_CACHE = `dart-static-${APP_VERSION}`;
 
 // Detect correct base path (works for GitHub Pages under /DART/ or locally)

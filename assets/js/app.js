@@ -2,6 +2,7 @@
 'use strict';              // optional but recommended
 
 const BUILD = "2025-10-12_11";  // bump this each time you deploy
+
 // ---- Globals ----
 let qlvimData = [];
 let swayBarIssue = null;   // null = unanswered, true = issue, false = compliant
@@ -1054,7 +1055,7 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
       }
       score += tokenHits;
 // —— Clause-first boosts (normalized) ——
-const qx = String(q || qNorm || "").toLowerCase().replace(/\s+/g, " ").trim();
+const qx = String(q || "").toLowerCase().replace(/\s+/g, " ").trim();
 const cX = String(c).toLowerCase();
 const pX = String(p).toLowerCase();
 const gX = String(g).toLowerCase();
@@ -1109,7 +1110,7 @@ if (pX.includes(qx) && !cX.includes(qx)) {
 )
 .sort((a, b) => {
     // clause-first tiebreaker (normalize and make stricter)
-  const qa = String((q || qNorm || "")).toLowerCase().replace(/\s+/g, " ").trim();  // e.g. "seating capacity"
+  const qa = String(q || "").toLowerCase().replace(/\s+/g, " ").trim(); // e.g. "seating capacity"
   const aC = String(a.Clause || a.clause || "").toLowerCase();
   const bC = String(b.Clause || b.clause || "").toLowerCase();
 // prefer clause matches over phrase-only matches

@@ -9,6 +9,11 @@ let shackleIssue = null; // null = unanswered, true = issue, false = compliant
 
 // ---- QLVIM text fallback + synonyms ----
 let qlvimText = [];
+// ---- Mod code maps (loaded from JSON) ----
+window.modLight = {};           // e.g. { LA1: "Equivalent engine installation", ... }
+window.modHeavy = {};           // e.g. { A1: "Engine substitution", ... }
+window.modCodeDescriptions = {}; // merged { code: title }
+function normCode(x){ return String(x||"").toUpperCase().trim(); }
 
 const synonyms = {
   "ride height": ["ground clearance", "suspension height"],
@@ -63,8 +68,7 @@ function openTab(evt, tabName) {
 
 function showModDescriptions() {
   const input = document.getElementById("modCodes").value;
-  const codes = input.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
-  const map = window.modCodeDescriptions || {};
+  const codes = input.split(",").map(s => normCode(s)).filter(Boolean);
   let html = "";
 
   if (!codes.length) {
@@ -72,20 +76,81 @@ function showModDescriptions() {
   } else {
     html = "<ul>";
     for (const code of codes) {
-      const desc = map[code];
-      html += `<li><strong>${code}</strong>: ${desc ? desc : '<span style="color:red;">Unknown code</span>'}</li>`;
+      const isHeavy = !!window.modHeavy[code];
+      const title   = window.modCodeDescriptions[code];
+      if (title) {
+        if (isHeavy) {
+          html += `<li><span style="color:red;"><strong>${code}</strong>: ${title} – Heavy vehicle mod code fitted</span></li>`;
+        } else {
+          html += `<li><strong>${code}</strong>: ${title}</li>`;
+        }
+      } else {
+        html += `<li><strong>${code}</strong>: <span style="color:red;">Unknown code</span></li>`;
+      }
     }
     html += "</ul>";
   }
   document.getElementById("modDescriptions").innerHTML = html;
 }
+
 // ----------------- QLVIM Helpers -----------------
 
-// Try to pull a section ref like s2.6.3 from nearby text (best-effort)
+// Try to pull a section ref like s18.5.1(a)(i) or "18 5.1"
 function extractSectionRef(text) {
-  const m = text.match(/\b(?:s(?:ection)?\s*)?(\d+(?:\.\d+)+)\b/i);
-  return m ? `s${m[1]}` : null;
+  const s = String(text || "");
+  // matches: 6.17(a), 18 5.1, s18.5.1(a)(i)
+  const re = /\b(?:s(?:ection)?\s*)?(\d{1,2}(?:[\s.]+\d+)+(?:\([a-z]\))*(?:\([ivx]+\))?)\b/i;
+  const m = s.match(re);
+  if (!m) return null;
+  // turn spaces into dots and normalise multiple dots
+  let token = m[1].replace(/(\d)\s+(?=\d)/g, "$1.").replace(/\.+/g, ".");
+  return `s${token}`;
 }
+// Get a readable one-line snippet around the first matching term
+function getSnippet(fullText, needles) {
+  const text = String(fullText || "");
+  const lower = text.toLowerCase();
+  const term = needles.find(n => lower.includes(n)) || "";
+  if (!term) return text.slice(0, 160).trim();
+
+  const idx = lower.indexOf(term);
+  const lb = text.lastIndexOf("\n", idx);
+  const la = text.indexOf("\n", idx + term.length);
+  if (lb >= 0 && la > lb) {
+    return text.slice(lb + 1, la).trim();
+  }
+  const start = Math.max(0, idx - 60);
+  const end   = Math.min(text.length, idx + term.length + 160);
+  return text.slice(start, end).replace(/\s+/g, " ").trim();
+}
+// Same card UI as mapped results
+function renderResultCard(item, out, idx = 0) {
+  // item: { category, clause, page, linkText, linkHref, dataSection }
+  const noteId = `note-${Date.now()}-${idx}`;
+  const wrap = document.createElement("div");
+  wrap.className = "result-item";
+  wrap.innerHTML = `
+    <div>
+      <strong><span class="category-pill">${(item.category || "Uncategorized")}</span></strong>
+      – ${item.clause}
+      – ensure vehicle complies with
+      <strong><a class="qlvim-link" href="${item.linkHref}" target="_blank" rel="noopener">${item.linkText}</a></strong>
+      of QLVIM.
+    </div>
+    <div class="result-note"><em>Note:</em> <input id="${noteId}" class="note-input" type="text" placeholder="optional note"></div>
+    <div class="result-actions">
+      <button type="button" class="action result-add-btn"
+        data-category="${(item.category || "Uncategorized").replace(/"/g,'&quot;')}"
+        data-sec="${(item.dataSection || "").replace(/"/g,'&quot;')}"
+        data-clause="${(item.clause || "").replace(/"/g,'&quot;')}"
+        data-page="${item.page}"
+        data-note-id="${noteId}"
+      >Add to Results</button>
+    </div>
+  `;
+  out.appendChild(wrap);
+}
+
 
 // Add the fallback item into the Results tab and flip the button state
 function addFallbackToResults(page, sectionRef, btnEl) {
@@ -107,12 +172,20 @@ function addFallbackToResults(page, sectionRef, btnEl) {
 function fallbackQLVIMTextSearch(rawTerm) {
   if (!qlvimText?.length) return false;
 
-  const terms = expandTerms(rawTerm);
+  // STEP 1: expand + normalize the query
+const q = (rawTerm || "").trim();
+if (!q) return false;
 
+const expanded = Array.from(new Set(expandTerms(q)));   // uses your synonyms()
+const needles  = expanded.map(s => s.toLowerCase());
+
+
+  
   // ✅ Get all matching pages, not just the first
   const pageHits = qlvimText.filter(p =>
-    terms.some(t => p.text?.toLowerCase().includes(t))
-  );
+  needles.some(n => p.text?.toLowerCase().includes(n))
+);
+
 
   if (!pageHits.length) return false;
 
@@ -120,31 +193,33 @@ function fallbackQLVIMTextSearch(rawTerm) {
   if (!resultsEl) return false;
 
   pageHits.forEach(pageHit => {
-    const snippet = getSnippet(pageHit.text, terms);
+   const snippet = getSnippet(pageHit.text, needles);
     const link = qlvimLink(pageHit.page);
     const sectionRef = extractSectionRef(pageHit.text);
+// Make Info Sheets look the same too
+const isInfo = /information sheet/i.test((pageHit.title || pageHit.Heading || "") + " " + pageHit.text);
+const category = isInfo ? "Information Sheets" : "Uncategorized";
 
-    const ensureHtml = sectionRef
-      ? `ensure complies with <a class="qlvim-link" href="${link}" target="_blank">${sectionRef}</a>`
-      : `ensure complies with <a class="qlvim-link" href="${link}" target="_blank">manual (page ${pageHit.page})</a>`;
+let secRef = sectionRef;
+// Optional page→section fallback (only if you added sectionFromPage):
+// if (!secRef && !isInfo && typeof sectionFromPage === "function") {
+//   secRef = sectionFromPage(pageHit.page); // e.g. "s18.5"
+// }
 
-    const html = `
-      <div class="result-item">
-        <div class="results-header">Unmapped match (text search) — page ${pageHit.page}</div>
-        <div class="result-note" style="margin-top:6px;">${snippet}</div>
-        <div class="photo-note" style="margin-top:8px;">${ensureHtml}</div>
-        <div style="margin-top:8px;">
-          <button type="button" class="action"
-            onclick="addFallbackToResults(${pageHit.page}, ${sectionRef ? `'${sectionRef}'` : null}, this)">
-            Add to Results
-          </button>
-          <a class="qlvim-link" href="${link}" target="_blank" style="margin-left:8px; text-decoration:underline;">
-            Open manual to page ${pageHit.page}
-          </a>
-        </div>
-      </div>
-    `;
-    resultsEl.insertAdjacentHTML("beforeend", html);
+const linkHref = link; // already built above
+const linkText = isInfo
+  ? `[${(pageHit.title || pageHit.Heading || "Information Sheet")} (p.${pageHit.page})]`
+  : (secRef ? `[${secRef}]` : `[open manual page ${pageHit.page}]`);
+
+renderResultCard({
+  category,
+  clause: snippet,
+  page: pageHit.page,
+  linkText,
+  linkHref,
+  dataSection: isInfo ? (pageHit.section || pageHit.Section || "") : (secRef || "")
+}, resultsEl);
+
   });
 
   return true;
@@ -203,7 +278,8 @@ function parseTyreSize(sizeStr) {
     const aspect = 82;
     const overall = 2 * (width * aspect / 100) + rimIn * 25.4;
     return { ok: true, type: "metric82", width_mm: width, aspect, rim_in: rimIn,
-             overall_mm: overall, normalized: `${width}/${aspect}R${rimIn}` };
+         overall_mm: overall, normalized: `${width}/${aspect}R${rimIn}`, assumed82: true };
+
   }
 
   // 3) Flotation (x): 31x10.5R15  → first number is OD (inches)
@@ -238,7 +314,8 @@ function parseTyreSize(sizeStr) {
     if (widthIn > 0 && widthIn < 16) {
       const overall = rimIn * 25.4 + 2 * (widthIn * 25.4);
       return { ok: true, type: "inch100", width_mm: widthIn * 25.4, aspect: 100, rim_in: rimIn,
-               overall_mm: overall, normalized: `${widthIn}R${rimIn}`.replace(/\.0\b/g,"") };
+         overall_mm: overall, normalized: `${widthIn}R${rimIn}`.replace(/\.0\b/g,""), assumed100: true };
+
     }
   }
 
@@ -295,22 +372,31 @@ if (window._largestStockTyre) {
     : [];
 
   
-  // Mod codes block
-  const modCodesSection = `
-    <h4 style="color:blue;">Engineering Mod Codes</h4>
-    ${
-      modCodes.length
-        ? `<ul>${
-            modCodes.map(code => {
-              const desc = (typeof modCodeDescriptions !== "undefined" && modCodeDescriptions[code])
-                ? modCodeDescriptions[code]
-                : `<span style="color:red;">Unknown code</span>`;
-              return `<li><strong>${code}</strong>: ${desc}</li>`;
-            }).join("")
-          }</ul>`
-        : `<p><em>No Codes Found</em></p>`
-    }
-  `;
+  // Mod codes block (light + heavy visual)
+const modCodesSection = `
+  <h4 style="color:blue;">Engineering Mod Codes</h4>
+  ${
+    modCodes.length
+      ? `<ul>${
+          modCodes.map(code => {
+            const c = code.trim().toUpperCase();
+            const isHeavy = !!window.modHeavy?.[c];
+            const title = window.modCodeDescriptions?.[c];
+            if (title) {
+              if (isHeavy) {
+                return `<li><span style="color:red;"><strong>${c}</strong>: ${title} – Heavy vehicle mod code fitted</span></li>`;
+              } else {
+                return `<li><strong>${c}</strong>: ${title}</li>`;
+              }
+            } else {
+              return `<li><strong>${c}</strong>: <span style="color:red;">Unknown code</span></li>`;
+            }
+          }).join("")
+        }</ul>`
+      : `<p><em>No Codes Found</em></p>`
+  }
+`;
+
 
   const now = new Date();
 
@@ -564,6 +650,29 @@ if (resultsTyreEl) {
       `<p><strong>Measured Tyre:</strong> ${parsed.normalized}</p>` +
       `<p><strong>Overall Diameter:</strong> ~${parsed.overall_mm.toFixed(0)} mm</p>` +
       `<p><em>Format detected:</em> ${parsed.type === "metric" ? "Metric" : "Imperial"}</p>`;
+      // --- Add Engineering Mod Codes under Results ---
+const modInput = document.getElementById("modCodes")?.value || "";
+const modCodes = modInput.split(",").map(normCode).filter(Boolean);
+
+if (modCodes.length) {
+  let html = "<p><strong>Engineering Mod Codes:</strong></p><ul>";
+  for (const code of modCodes) {
+    const isHeavy = !!window.modHeavy[code];
+    const title = window.modCodeDescriptions[code];
+    if (title) {
+      if (isHeavy) {
+        html += `<li><span style="color:red;"><strong>${code}</strong>: ${title} – Heavy vehicle mod code fitted</span></li>`;
+      } else {
+        html += `<li><strong>${code}</strong>: ${title}</li>`;
+      }
+    } else {
+      html += `<li><strong>${code}</strong>: <span style="color:red;">Unknown code</span></li>`;
+    }
+  }
+  html += "</ul>";
+  resultsTyreEl.innerHTML += html;
+}
+
   } else {
     // If the input couldn’t be parsed → clear the Results area
     resultsTyreEl.innerHTML = "";
@@ -688,23 +797,31 @@ const ASSET_BASE = location.pathname.includes("/DART/") ? "/DART/" : "./";
 
 
 // ---- Mod codes map ----
-window.modCodeDescriptions = {}; // exists even if fetch fails
+// ---- Mod codes maps (light + heavy) ----
+Promise.all([
+  fetch(`${ASSET_BASE}assets/modcodes-light.json`, { cache: "no-store" }).then(r => r.ok ? r.json() : { codes: [] }),
+  fetch(`${ASSET_BASE}assets/modcodes-heavy.json`, { cache: "no-store" }).then(r => r.ok ? r.json() : { codes: [] })
+]).then(([light, heavy]) => {
+  // both files use { codes: [ { code, title }, ... ] }
+  (Array.isArray(light.codes) ? light.codes : []).forEach(({code, title}) => {
+    const k = normCode(code);
+    if (k) window.modLight[k] = String(title||"").trim();
+  });
+  (Array.isArray(heavy.codes) ? heavy.codes : []).forEach(({code, title}) => {
+    const k = normCode(code);
+    if (k) window.modHeavy[k] = String(title||"").trim();
+  });
 
-fetch(`${ASSET_BASE}assets/mod-codes.json?v=2`, { cache: "no-store" })
-  .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
-  .then(data => {
-    // Accept object map OR array of {code, desc}
-    window.modCodeDescriptions = Array.isArray(data)
-      ? data.reduce((acc, it) => {
-          const code = String(it.code ?? it.Code ?? "").toUpperCase().trim();
-          const desc = String(it.desc ?? it.description ?? it.Desc ?? "");
-          if (code) acc[code] = desc;
-          return acc;
-        }, {})
-      : (data || {});
-    console.log("Mod codes loaded:", Object.keys(window.modCodeDescriptions).length);
-  })
-  .catch(err => console.warn("Could not load mod-codes.json; showing 'Unknown code'.", err));
+  // merged map (heavy overrides light on clashes)
+  window.modCodeDescriptions = { ...window.modLight, ...window.modHeavy };
+
+  console.log("Mod codes loaded:",
+    "light:", Object.keys(window.modLight).length,
+    "heavy:", Object.keys(window.modHeavy).length,
+    "merged:", Object.keys(window.modCodeDescriptions).length
+  );
+}).catch(err => console.warn("Mod codes load failed:", err));
+
 
 // ---- QLVIM mapping ----
 const QLVIM_URL = `${ASSET_BASE}assets/QLVIM_mapping.json?nocache=${Date.now()}`;
@@ -803,6 +920,43 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
     if (!Array.isArray(qlvimData) || qlvimData.length === 0) {
       out.innerHTML = "<p><em>Mapping not loaded.</em></p>"; return;
     }
+    // --- Mod code short-circuit (supports comma-separated codes) ---
+(function () {
+  const raw = (document.getElementById("dartSearch")?.value || "");
+  const codes = raw.split(/[,\s]+/).map(normCode).filter(Boolean);
+  if (!codes.length) return;
+
+  // if EVERY token looks like a mod code (letters+digits), handle here
+  const looksLikeCodes = codes.every(c => /^[A-Z]{1,3}\d{1,2}$/i.test(c));
+  if (!looksLikeCodes) return;
+
+  // Render matches (heavy in red with suffix)
+  let any = false;
+  let html = "<ul>";
+  for (const code of codes) {
+    const isHeavy = !!window.modHeavy[code];
+    const titleL  = window.modLight[code];
+    const titleH  = window.modHeavy[code];
+
+    if (isHeavy) {
+      html += `<li><span style="color:red;"><strong>${code}</strong>: ${titleH} – Heavy vehicle mod code fitted</span></li>`;
+      any = true;
+    } else if (titleL) {
+      html += `<li><strong>${code}</strong>: ${titleL}</li>`;
+      any = true;
+    } else {
+      html += `<li><strong>${code}</strong>: <span style="color:red;">Unknown code</span></li>`;
+      any = true;
+    }
+  }
+  html += "</ul>";
+
+  if (any) {
+    out.innerHTML = html;
+    return; // stop here: don't run the QLVIM phrase search
+  }
+})();
+
 
     // Token-based matching: robust for queries like "faded plate", "headlamp aim"
     const tokens = q.split(/\s+/).filter(w => w.length >= 3);
@@ -823,7 +977,7 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
 
       // contains-boosts
       if (p.includes(q)) score += 5;   // phrase
-      if (c.includes(q)) score += 3;   // clause
+     
       if (g.includes(q)) score += 4;   // category
 
       // token-based fuzzy scoring (prefer phrase/category)
@@ -834,6 +988,41 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
         if (c.includes(t)) tokenHits += 1;
       }
       score += tokenHits;
+// —— Clause-first boosts (normalized) ——
+const qx = String(q || qNorm || "").toLowerCase().replace(/\s+/g, " ").trim();
+const cX = String(c).toLowerCase();
+const pX = String(p).toLowerCase();
+const gX = String(g).toLowerCase();
+
+// exact clause equals query (strongest)
+if (cX === qx) score += 40;
+
+// exact phrase appears in clause (very strong)
+else if (cX.includes(qx)) score += 28;
+
+// all query words in order within the clause (looser than exact)
+const words = qx.split(" ").filter(Boolean);
+if (words.length >= 2) {
+  const inOrder = new RegExp(words.map(w => `\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).join(".*"), "i");
+  if (inOrder.test(cX)) score += 12;
+}
+
+// demote if clause does not contain any query word
+if (!words.some(w => cX.includes(w))) score -= 10;
+
+// extra demotion if the hit is only in phrase/category but not clause
+if ((pX.includes(qx) || gX.includes(qx)) && !cX.includes(qx)) score -= 6;
+// 🔥 HARD CLAUSE PRIORITY — if the query phrase appears in clause text,
+// give a massive override so it always ranks first.
+if (cX.includes(qx)) {
+  score += 200; // absolute dominance over phrase-only matches
+}
+
+// Safety: if phrase contains it but clause doesn’t, halve that score
+if (pX.includes(qx) && !cX.includes(qx)) {
+  score -= 40;
+}
+
 
       // slight nudge for shorter (more specific) phrases
       if (p && (p.includes(q) || q.includes(p))) {
@@ -853,12 +1042,45 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
       return acc;
     }, {})
 )
-// convert object → array, then sort and take top 3
-.sort((a, b) =>
-  b._score - a._score ||
-  ((a.Phrase || a.phrase || "").length - (b.Phrase || b.phrase || "").length) ||
-  String(a.Section || a.section || "").localeCompare(String(b.Section || b.section || ""))
-)
+.sort((a, b) => {
+    // clause-first tiebreaker (normalize and make stricter)
+  const qa = String((q || qNorm || "")).toLowerCase().replace(/\s+/g, " ").trim();  // e.g. "seating capacity"
+  const aC = String(a.Clause || a.clause || "").toLowerCase();
+  const bC = String(b.Clause || b.clause || "").toLowerCase();
+// prefer clause matches over phrase-only matches
+const aP = String(a.Phrase || a.phrase || "").toLowerCase();
+const bP = String(b.Phrase || b.phrase || "").toLowerCase();
+const aPhraseOnly = aP.includes(qa) && !aC.includes(qa);
+const bPhraseOnly = bP.includes(qa) && !bC.includes(qa);
+if (aPhraseOnly !== bPhraseOnly) return aPhraseOnly ? 1 : -1; // push phrase-only below
+
+  // exact phrase test and loose in-order test
+  const words = qa.split(" ").filter(Boolean);
+  const inOrder = words.length >= 2
+    ? new RegExp(words.map(w => `\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).join(".*"), "i")
+    : null;
+
+  const aExact = qa && aC.includes(qa);
+  const bExact = qa && bC.includes(qa);
+  if (aExact !== bExact) return aExact ? -1 : 1;
+
+  const aOrder = inOrder ? inOrder.test(aC) : false;
+  const bOrder = inOrder ? inOrder.test(bC) : false;
+  if (aOrder !== bOrder) return aOrder ? -1 : 1;
+
+
+  // Then compare by score
+  const scoreDiff = b._score - a._score;
+  if (scoreDiff !== 0) return scoreDiff;
+
+  // Then prefer shorter phrases
+  const lenDiff = ((a.Phrase || a.phrase || "").length - (b.Phrase || b.phrase || "").length);
+  if (lenDiff !== 0) return lenDiff;
+
+  // Final fallback: alphabetical by section
+  return String(a.Section || a.section || "").localeCompare(String(b.Section || b.section || ""));
+})
+
 .slice(0, 3);
 
 
@@ -950,7 +1172,8 @@ document.addEventListener("DOMContentLoaded", () => {
     openTab(null, lastTab);
       }
 
-  fetch(`${BASE}assets/QLVIM_text.json?nocache=${Date.now()}`)
+ fetch(`${ASSET_BASE}assets/QLVIM_text.json?nocache=${Date.now()}`)
+
     .then(r => r.json())
     .then(data => { qlvimText = data; console.log(`QLVIM_text loaded: ${data.length} pages`); })
     .catch(err => console.warn("QLVIM_text.json load failed", err));
@@ -1180,12 +1403,13 @@ const tyreResult = document.getElementById("largestTyreResult");
 
 // Helper: format one line with inline assumption notes
 function renderLine(p) {
-  const notes = [];
-  if (p.assumed100) notes.push("assumed 100% profile");
-  if (p.assumed82)  notes.push("assumed 82% profile");
-  const noteTxt = notes.length ? ` (${notes.join("; ")})` : "";
-  return `${p.label} \u2192 ~${p.odMm} mm${noteTxt}`;
+  const noteTxt =
+    p.assumed100 ? " (assumed ratio of 100%)" :
+    p.assumed82  ? " (assumed ratio of 82%)"  :
+    "";
+  return `${p.normalized} \u2192 ~${Math.round(p.overall_mm)} mm${noteTxt}`;
 }
+
 
 if (tyreBtn) {
   tyreBtn.addEventListener("click", () => {
@@ -1214,14 +1438,18 @@ if (!parsed.length) {
 parsed.sort((a, b) => b.overall_mm - a.overall_mm);
 const largest = parsed[0];
 
-// Build output
-let html = `Largest tyre: <strong>${largest.normalized}</strong> (OD ~<strong>${largest.overall_mm.toFixed(0)} mm</strong>)<br><br>`;
+// Build output (with assumed-ratio notes)
+const largestNote =
+  largest.assumed100 ? " (assumed ratio of 100%)" :
+  largest.assumed82  ? " (assumed ratio of 82%)"  : "";
+
+let html = `Largest tyre: <strong>${largest.normalized}</strong> (OD ~<strong>${largest.overall_mm.toFixed(0)} mm</strong>${largestNote})<br><br>`;
 html += `All entered sizes:<br>`;
-html += parsed.map(p => `${p.normalized} → ~${p.overall_mm.toFixed(0)} mm`).join("<br>");
+html += parsed.map(renderLine).join("<br>");
 
 tyreResult.innerHTML = html;
 
-// Store for Save/Results use
+// Store for Save/Results use (no change needed beyond existing fields)
 window._largestStockTyre = {
   label: largest.normalized,
   odMm: Math.round(largest.overall_mm)

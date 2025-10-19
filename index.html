@@ -118,7 +118,7 @@
   <input type="number" id="trackRear" placeholder="e.g. 1620"><br>
 
   <h3>Tyre Sizes</h3>
-<p><em>Enter multiple sizes from Tyre placard or RVD, one per line or separated by commas.</em></p>
+<p><em>Enter 1 or multiple sizes from Tyre placard or RVD, one per line or separated by commas.</em></p>
 <textarea id="tyreSizes" rows="5" style="width:100%; max-width:480px;" placeholder="205/80R16
 7.50R16
 255/70R15LT
@@ -411,8 +411,15 @@ document.addEventListener("click", (e) => {
   }
 });
 </script>
+
+<script>
+  // Ensure BUILD exists globally for inline scripts and service worker versioning
+  window.BUILD = window.BUILD || "2025-10-12_13";  // bump when you deploy a new build
+</script>
+
+
 <!-- 🔄 DART auto-update service worker -->
-<!-- 🔄 DART auto-update service worker -->
+
 <script>
   
 const BASE = location.pathname.includes('/DART/') ? '/DART/' : '/';

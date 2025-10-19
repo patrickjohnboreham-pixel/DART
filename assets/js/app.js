@@ -1,12 +1,15 @@
 
 'use strict';              // optional but recommended
 
-const BUILD = "2025-10-12_13";  // bump this each time you deploy
+// Ensure BUILD exists globally and is a window property
+window.BUILD = window.BUILD || "2025-10-12_13";  // bump per deploy
+const BUILD = window.BUILD;                       // local alias if code uses BUILD
 
 // ---- Globals ----
 let qlvimData = [];
 let swayBarIssue = null;   // null = unanswered, true = issue, false = compliant
 let shackleIssue = null; // null = unanswered, true = issue, false = compliant
+
 
 // ---- QLVIM text fallback + synonyms ----
 let qlvimText = [];
@@ -55,6 +58,7 @@ function normCode(x){ return String(x||"").toUpperCase().trim(); }
 
 const synonyms = {
   "ride height": ["ground clearance", "suspension height"],
+  "too low": ["ground clearance", "ride height", "suspension height"],
   "ground clearance": ["ride height"],
   "bullbar": ["nudge bar", "roo bar"],
   "tyre": ["tire", "tyres", "tires"],
@@ -62,6 +66,7 @@ const synonyms = {
   "lift kit": ["raised suspension", "suspension lift"],
   "snorkel": ["air intake snorkel"],
   "winch": ["front winch", "electric winch"]
+  
 };
 
 function expandTerms(term) {
@@ -219,6 +224,8 @@ function addFallbackToResults(page, sectionRef, btnEl) {
     btnEl.disabled = true; // optional, can remove if you want repeatable adds
   }
 }
+// ---------------- Search QLVIM (mapped first, then fallback) ----------------
+
 function fallbackQLVIMTextSearch(rawTerm) {
   if (!qlvimText?.length) return false;
 
@@ -372,6 +379,56 @@ function parseTyreSize(sizeStr) {
   return { ok: false, reason: "unrecognized format" };
 }
 
+// ---------------- Helper: Compute largest placard tyre ----------------
+function computeLargestTyreFromHome({ updateUi = false } = {}) {
+  const inputEl  = document.getElementById("tyreSizes");
+  const resultEl = document.getElementById("largestTyreResult");
+  const raw = (inputEl?.value || "").trim();
+
+  if (!raw) {
+    window._largestStockTyre = undefined;
+    if (updateUi && resultEl) resultEl.textContent = "No tyre sizes entered.";
+    return null;
+  }
+
+  const items  = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  const parsed = items.map(parseTyreSize).filter(p => p && p.ok);
+  if (!parsed.length) {
+    window._largestStockTyre = undefined;
+    if (updateUi && resultEl) resultEl.textContent = "No valid tyre sizes detected.";
+    return null;
+  }
+
+  parsed.sort((a, b) => b.overall_mm - a.overall_mm);
+  const largest = parsed[0];
+
+  window._largestStockTyre = {
+    label: largest.normalized,
+    odMm : Math.round(largest.overall_mm)
+  };
+
+  if (updateUi && resultEl) {
+    const assumedNote =
+      largest.assumed100 ? " (assumed ratio of 100%)" :
+      largest.assumed82  ? " (assumed ratio of 82%)"  : "";
+
+    const renderLine = p => {
+      const n = p.assumed100 ? " (assumed ratio of 100%)"
+              : p.assumed82  ? " (assumed ratio of 82%)" : "";
+      return `${p.normalized} → ~${Math.round(p.overall_mm)} mm${n}`;
+    };
+
+    let html = `Largest tyre: <strong>${largest.normalized}</strong> (OD ~<strong>${largest.overall_mm.toFixed(0)} mm</strong>${assumedNote})<br><br>`;
+    html += `All entered sizes:<br>` + parsed.map(renderLine).join("<br>");
+    resultEl.innerHTML = html;
+  }
+
+  return window._largestStockTyre;
+}
+
+
+
+
 // Live preview for measured tyre input
 function updateMeasuredTyrePreview() {
   const s = document.getElementById("m_tyreSize")?.value || "";
@@ -396,6 +453,7 @@ function updateMeasuredTyrePreview() {
 
 /* ---------------- Save Vehicle Details ---------------- */
 function saveVehicleDetails() {
+  computeLargestTyreFromHome({ updateUi: false });
   // Basic details (escaped)
 const rego     = escapeHTML((document.getElementById("rego").value || "").trim());
 const make     = escapeHTML((document.getElementById("make").value || "").trim());
@@ -768,8 +826,8 @@ if (tyreDiaAlert) {
         `<p><strong><span style="color:${headingClr};">Tyre Diameter</span></strong> – ` +
         `${stockLabel}: ~${stockDia} mm, ` +
         `Measured Diameter: ~${measuredDia} mm, ` +
-        `Increase: ${incStr} over 50mm limit. ` +
-        `Rectify the tyre diameter to comply with s7.4.D QLVIM and s.4.4, LS9 QCOP.</p>`;
+        `Increase: ${incStr} exceeds 50mm limit. ` +
+        `Rectify the tyre diameter to comply with s.4.4, LS9 QCOP.</p>`;
     }
   }
 }
@@ -977,7 +1035,12 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
   
   // ---------- Search ----------
   function searchQLVIM() {
-    const q = (document.getElementById("dartSearch")?.value || "").trim().toLowerCase();
+    const q = (
+  document.getElementById("searchQLVIM")?.value ||
+  document.getElementById("dartSearch")?.value ||
+  ""
+).trim().toLowerCase();
+
     const out = document.getElementById("searchResults");
     if (!out) return;
     out.innerHTML = "";
@@ -1024,8 +1087,12 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
 })();
 
 
-    // Token-based matching: robust for queries like "faded plate", "headlamp aim"
-    const tokens = q.split(/\s+/).filter(w => w.length >= 3);
+    // Token-based matching + synonym expansion
+const expandedTerms = Array.from(new Set(expandTerms(q))); // uses your synonyms()
+const tokens = Array.from(
+  new Set(expandedTerms.join(" ").split(/\s+/).filter(w => w.length >= 3))
+);
+
 
     const results = Object.values(
   qlvimData
@@ -1038,64 +1105,34 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
 
       let score = 0;
 
-      // strong boost for exact phrase
-      if (p === q) score += 10;
+// 1) exact / boundary boosts on PHRASE
+if (p === q) score += 1000; // exact phrase should always win
+if (new RegExp(`\\b${q.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\b`).test(p)) score += 40;
 
-      // contains-boosts
-      if (p.includes(q)) score += 5;   // phrase
-     
-      if (g.includes(q)) score += 4;   // category
+// 2) contains boosts
+if (p.includes(q)) score += 20;
+if (c.includes(q)) score += 12;
+if (g.includes(q)) score += 8;
 
-      // token-based fuzzy scoring (prefer phrase/category)
-      let tokenHits = 0;
-      for (const t of tokens) {
-        if (p.includes(t)) tokenHits += 2;
-        if (g.includes(t)) tokenHits += 2;
-        if (c.includes(t)) tokenHits += 1;
-      }
-      score += tokenHits;
-// —— Clause-first boosts (normalized) ——
-const qx = String(q || "").toLowerCase().replace(/\s+/g, " ").trim();
-const cX = String(c).toLowerCase();
-const pX = String(p).toLowerCase();
-const gX = String(g).toLowerCase();
+// 3) token fuzzy (prefer clause most for defect specifics)
+let tokenHits = 0;
+for (const t of tokens) {
+  if (c.includes(t)) tokenHits += 3;
+  if (p.includes(t)) tokenHits += 2;
+  if (g.includes(t)) tokenHits += 1;
+}
+score += tokenHits;
 
-// exact clause equals query (strongest)
-if (cX === qx) score += 40;
-
-// exact phrase appears in clause (very strong)
-else if (cX.includes(qx)) score += 28;
-
-// all query words in order within the clause (looser than exact)
-const words = qx.split(" ").filter(Boolean);
-if (words.length >= 2) {
-  const inOrder = new RegExp(words.map(w => `\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).join(".*"), "i");
-  if (inOrder.test(cX)) score += 12;
+// 4) synonym boosts (from expandedTerms)
+for (const syn of expandedTerms) {
+  if (!syn || syn === q) continue;
+  if (c.includes(syn)) score += 18;
+  else if (p.includes(syn)) score += 10;
+  else if (g.includes(syn)) score += 8;
 }
 
-// demote if clause does not contain any query word
-if (!words.some(w => cX.includes(w))) score -= 10;
+return { ...it, _score: score };
 
-// extra demotion if the hit is only in phrase/category but not clause
-if ((pX.includes(qx) || gX.includes(qx)) && !cX.includes(qx)) score -= 6;
-// 🔥 HARD CLAUSE PRIORITY — if the query phrase appears in clause text,
-// give a massive override so it always ranks first.
-if (cX.includes(qx)) {
-  score += 200; // absolute dominance over phrase-only matches
-}
-
-// Safety: if phrase contains it but clause doesn’t, halve that score
-if (pX.includes(qx) && !cX.includes(qx)) {
-  score -= 40;
-}
-
-
-      // slight nudge for shorter (more specific) phrases
-      if (p && (p.includes(q) || q.includes(p))) {
-        score += Math.max(0, 3 - Math.min(3, Math.floor(p.length / 12)));
-      }
-
-      return { ...it, _score: score };
     })
     .filter(it => it._score > 0)
     // 🔑 Deduplicate by Section+Clause+Page, keep highest score

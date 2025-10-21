@@ -1,7 +1,10 @@
 // sw.js — DART auto-update service worker
-// sw.js — DART auto-update service worker
-const APP_VERSION = '2025-10-11_14'; // bump each deploy
+// Automatically read version from ?v= parameter
+const SW_URL = new URL(self.location.href);
+const APP_VERSION = SW_URL.searchParams.get('v') || 'dev';
 const STATIC_CACHE = `dart-static-${APP_VERSION}`;
+
+// Detect correct base path (works for GitHub Pages under /DART/ or locally)
 
 // Detect correct base path (works for GitHub Pages under /DART/ or locally)
 const BASE = new URL(self.registration.scope).pathname.replace(/\/+$/, '/') || '/';

@@ -422,36 +422,68 @@ document.addEventListener("click", (e) => {
 <!-- 🔄 DART auto-update service worker -->
 
 <script>
-  
-const BASE = location.pathname.includes('/DART/') ? '/DART/' : '/';
+  const BASE = location.pathname.includes('/DART/') ? '/DART/' : '/';
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register(`${BASE}sw.js?v=${BUILD}`, { scope: BASE }).then(reg => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register(`${BASE}sw.js?v=${BUILD}`, { scope: BASE })
+      .then(reg => {
+        // Check for updates when tab regains focus or every 15 min
+        const check = () => reg.update().catch(()=>{});
+        check();
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) check();
+        });
+        setInterval(check, 15 * 60 * 1000); // background check every 15 min
 
-    // Update checker (optional)
-    const check = () => reg.update().catch(()=>{});
-    check();
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) check();
-    });
+        // Show a banner if a new version is installed
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateBanner();
+            }
+          });
+        });
 
-    // Force activate new SW immediately
-    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        // When user clicks Reload → skip waiting → reload
+        navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+      })
+      .catch(err => console.error('SW registration failed:', err));
+  }
 
-    reg.addEventListener('updatefound', () => {
-      const nw = reg.installing;
-      nw?.addEventListener('statechange', () => {
-        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-          nw.postMessage({ type: 'SKIP_WAITING' });
-        }
-      });
-    });
+  // === Banner helper ===
+  function showUpdateBanner() {
+    if (document.getElementById('dartUpdateBanner')) return;
 
-    // Reload when new worker takes control
-    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
-  }).catch(err => console.error('SW registration failed:', err));
-}
+    const bar = document.createElement('div');
+    bar.id = 'dartUpdateBanner';
+    bar.innerHTML = `
+      <div style="
+        position:fixed; left:0; right:0; bottom:0; z-index:99999;
+        background:#1f2937; color:#fff; padding:12px 16px;
+        display:flex; align-items:center; justify-content:space-between;
+        box-shadow:0 -2px 8px rgba(0,0,0,.4); font-family:sans-serif;
+      ">
+        <span>A new version of DART is available.</span>
+        <button id="reloadDartBtn" style="
+          background:#10b981; border:0; color:#000; font-weight:600;
+          padding:8px 14px; border-radius:8px; cursor:pointer;
+        ">Reload</button>
+      </div>`;
+    document.body.appendChild(bar);
+
+    document.getElementById('reloadDartBtn').onclick = () => {
+      if (navigator.serviceWorker.waiting) {
+        navigator.serviceWorker.waiting.postMessage({ type: 'SKIP_WAITING' });
+      } else {
+        location.reload();
+      }
+    };
+  }
 </script>
+
 
 
 

@@ -1,9 +1,7 @@
+'use strict';  // keep this line — it’s good practice
 
-'use strict';              // optional but recommended
-
-// Ensure BUILD exists globally and is a window property
-window.BUILD = window.BUILD || "2025-10-12_13";  // bump per deploy
-const BUILD = window.BUILD;                       // local alias if code uses BUILD
+// Use global version defined by the meta tag in index.html
+const BUILD = window.BUILD;
 
 // ---- Globals ----
 let qlvimData = [];

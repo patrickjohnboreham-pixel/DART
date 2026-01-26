@@ -953,6 +953,8 @@ fetch(QLVIM_URL, { cache: "no-store" })
     });
 
     console.log("QLVIM mapping loaded:", qlvimData.length, "rows");
+    window.qlvimData = qlvimData;
+
   })
   .catch(err => console.error("QLVIM mapping failed to load:", err));
 
@@ -1032,8 +1034,8 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
 
   
   // ---------- Search ----------
-  function searchQLVIM() {
-    const q = (
+  window.searchQLVIM = function () {
+     const q = (
   document.getElementById("searchQLVIM")?.value ||
   document.getElementById("dartSearch")?.value ||
   ""
@@ -1044,21 +1046,27 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
     out.innerHTML = "";
 
     if (!q) { out.innerHTML = "<p><em>Type something to search.</em></p>"; return; }
-    if (!Array.isArray(qlvimData) || qlvimData.length === 0) {
-      out.innerHTML = "<p><em>Mapping not loaded.</em></p>"; return;
-    }
-    // --- Mod code short-circuit (supports comma-separated codes) ---
-(function () {
-  const raw = (document.getElementById("dartSearch")?.value || "");
+    const data = window.qlvimData;
+
+if (!Array.isArray(data) || data.length === 0) {
+  out.innerHTML = "<p><em>Mapping not loaded.</em></p>";
+  return;
+}
+   
+// --- Mod code short-circuit (supports comma-separated codes) ---
+const handledModCodes = (() => {
+  const raw =
+    document.getElementById("searchQLVIM")?.value ||
+    document.getElementById("dartSearch")?.value ||
+    "";
+
   const codes = raw.split(/[,\s]+/).map(normCode).filter(Boolean);
-  if (!codes.length) return;
+  if (!codes.length) return false;
 
   // if EVERY token looks like a mod code (letters+digits), handle here
   const looksLikeCodes = codes.every(c => /^[A-Z]{1,3}\d{1,2}$/i.test(c));
-  if (!looksLikeCodes) return;
+  if (!looksLikeCodes) return false;
 
-  // Render matches (heavy in red with suffix)
-  let any = false;
   let html = "<ul>";
   for (const code of codes) {
     const isHeavy = !!window.modHeavy[code];
@@ -1067,23 +1075,19 @@ function addToResults(title, section, clause, page, noteInputId, btn) {
 
     if (isHeavy) {
       html += `<li><span style="color:red;"><strong>${code}</strong>: ${titleH} – Heavy vehicle mod code fitted</span></li>`;
-      any = true;
     } else if (titleL) {
       html += `<li><strong>${code}</strong>: ${titleL}</li>`;
-      any = true;
     } else {
       html += `<li><strong>${code}</strong>: <span style="color:red;">Unknown code</span></li>`;
-      any = true;
     }
   }
   html += "</ul>";
 
-  if (any) {
-    out.innerHTML = html;
-    return; // stop here: don't run the QLVIM phrase search
-  }
+  out.innerHTML = html;
+  return true;
 })();
 
+if (handledModCodes) return;
 
     // Token-based matching + synonym expansion
 const expandedTerms = Array.from(new Set(expandTerms(q))); // uses your synonyms()
@@ -1103,14 +1107,17 @@ const tokens = Array.from(
 
       let score = 0;
 
-// 1) exact / boundary boosts on PHRASE
-if (p === q) score += 1000; // exact phrase should always win
-if (new RegExp(`\\b${q.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\b`).test(p)) score += 40;
+/// 1) PHRASE dominates (fixes "too low" -> ground clearance)
+if (p === q) score += 5000;                       // exact phrase = king
+if (p.includes(q)) score += 1500;                 // strong phrase contains
 
-// 2) contains boosts
-if (p.includes(q)) score += 20;
-if (c.includes(q)) score += 12;
-if (g.includes(q)) score += 8;
+// boundary phrase match (nice extra boost)
+if (new RegExp(`\\b${q.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\b`).test(p)) score += 500;
+
+// 2) clause/category are weaker
+if (c.includes(q)) score += 150;
+if (g.includes(q)) score += 50;
+
 
 // 3) token fuzzy (prefer clause most for defect specifics)
 let tokenHits = 0;
@@ -1121,13 +1128,15 @@ for (const t of tokens) {
 }
 score += tokenHits;
 
-// 4) synonym boosts (from expandedTerms)
+// 4) synonym boosts (PHRASE-first)
 for (const syn of expandedTerms) {
   if (!syn || syn === q) continue;
-  if (c.includes(syn)) score += 18;
-  else if (p.includes(syn)) score += 10;
-  else if (g.includes(syn)) score += 8;
+
+  if (p.includes(syn)) score += 800;      // phrase synonym is strong
+  else if (c.includes(syn)) score += 250; // clause synonym weaker
+  else if (g.includes(syn)) score += 80;
 }
+
 
 return { ...it, _score: score };
 
@@ -1148,12 +1157,7 @@ return { ...it, _score: score };
   const qa = String(q || "").toLowerCase().replace(/\s+/g, " ").trim(); // e.g. "seating capacity"
   const aC = String(a.Clause || a.clause || "").toLowerCase();
   const bC = String(b.Clause || b.clause || "").toLowerCase();
-// prefer clause matches over phrase-only matches
-const aP = String(a.Phrase || a.phrase || "").toLowerCase();
-const bP = String(b.Phrase || b.phrase || "").toLowerCase();
-const aPhraseOnly = aP.includes(qa) && !aC.includes(qa);
-const bPhraseOnly = bP.includes(qa) && !bC.includes(qa);
-if (aPhraseOnly !== bPhraseOnly) return aPhraseOnly ? 1 : -1; // push phrase-only below
+// (intentionally removed – phrase-only matches are valid for defect search)
 
   // exact phrase test and loose in-order test
   const words = qa.split(" ").filter(Boolean);

@@ -11,9 +11,10 @@ body { font-family: Arial, sans-serif; margin: 20px; }
     padding: 10px 16px; cursor: pointer; border: 1px solid #ccc;
     border-bottom: none; border-radius: 6px 6px 0 0; background: #f0f0f0;
   }
-  .tabbar button.active { background: #fff; font-weight: bold; }
+  .tabbar button.active { background: #e6e6e6; font-weight: bold; }
   .tab-content { display: none; padding: 12px; border: 1px solid #ccc; border-radius: 0 6px 6px 6px; }
   .tab-content.active { display: block; }
+  
 
   /* Help tab gallery */
   .help-grid {

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="dart-build" content="2026-01-26_02" />
+  <meta name="dart-build" content="2026-02-00_01" />
 <script>
   window.BUILD = document.querySelector('meta[name="dart-build"]').content;
 </script>
@@ -71,6 +71,18 @@
 
   <h3>Vehicle Details</h3>
   <p><em>Enter the details of the inspected vehicle.</em></p>
+
+<div id="vehicleTypeWrap" style="margin:8px 0 10px 0;">
+  <label class="toggle">
+    <input type="checkbox" id="vehicleTypeToggle">
+    <span class="slider"></span>
+  </label>
+
+  <div id="vehicleTypeLabel" style="margin-top:6px; font-size:0.95em;">
+    <strong>4x4</strong> (category <strong>NA, NB, MC</strong>)
+  </div>
+</div>
+
 
   <label>Registration:</label>
 <input type="text" id="rego" placeholder="Feature disabled" disabled><br>

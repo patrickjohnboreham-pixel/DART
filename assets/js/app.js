@@ -116,23 +116,49 @@ function showModDescriptions() {
     html = "Please enter at least one mod code.";
   } else {
     html = "<ul>";
+
+    const vehicleType = window.DART_VEHICLE_TYPE || "4x4"; // "4x4" | "passenger"
+
     for (const code of codes) {
       const isHeavy = !!window.modHeavy[code];
       const title   = window.modCodeDescriptions[code];
+
+      // ---- Category ↔ Mod code conflict rules ----
+      const alwaysConflict =
+        code === "LS12" ||
+        code === "LS14" ||
+        code === "LO7"  ||
+        code.startsWith("LL"); // all LL codes
+
+      const passengerOnlyConflict =
+        (code === "LS9" || code === "LS10");
+
+      const isConflict =
+        alwaysConflict ||
+        (vehicleType === "passenger" && passengerOnlyConflict);
+
+      const conflictMsg = isConflict
+        ? ` <span style="color:red;">Category and Mod Code conflict – confirm correct code fitted</span>`
+        : "";
+
       if (title) {
         if (isHeavy) {
-          html += `<li><span style="color:red;"><strong>${code}</strong>: ${title} – Heavy vehicle mod code fitted</span></li>`;
+          // KEEP HV wording exactly the same, just append conflict if needed
+          html += `<li><span style="color:red;"><strong>${code}</strong>: ${title} – Heavy vehicle mod code fitted</span>${conflictMsg}</li>`;
         } else {
-          html += `<li><strong>${code}</strong>: ${title}</li>`;
+          html += `<li><strong>${code}</strong>: ${title}${conflictMsg}</li>`;
         }
       } else {
-        html += `<li><strong>${code}</strong>: <span style="color:red;">Unknown code</span></li>`;
+        html += `<li><strong>${code}</strong>: <span style="color:red;">Unknown code</span>${conflictMsg}</li>`;
       }
     }
+
     html += "</ul>";
   }
+
   document.getElementById("modDescriptions").innerHTML = html;
 }
+
 
 // ----------------- QLVIM Helpers -----------------
 
@@ -404,6 +430,16 @@ function computeLargestTyreFromHome({ updateUi = false } = {}) {
     label: largest.normalized,
     odMm : Math.round(largest.overall_mm)
   };
+// --- NEW: placard stats (max OD, min OD, max width) ---
+const maxOD = parsed.reduce((m, p) => Math.max(m, p.overall_mm), -Infinity);
+const minOD = parsed.reduce((m, p) => Math.min(m, p.overall_mm),  Infinity);
+const maxW  = parsed.reduce((m, p) => Math.max(m, p.width_mm || 0), 0);
+
+window._placardTyreStats = {
+  maxOdMm: Math.round(maxOD),
+  minOdMm: Math.round(minOD),
+  maxWidthMm: Math.round(maxW)
+};
 
   if (updateUi && resultEl) {
     const assumedNote =
@@ -640,20 +676,9 @@ async function saveReportPDF() {
   setTimeout(() => window.print(), 400);
 }
 
-// (Optional) Live preview photos in Results as soon as user selects them
-document.addEventListener('DOMContentLoaded', () => {
-  const photosInput = document.querySelector('#photos input[type="file"]');
-  if (photosInput) {
-    photosInput.addEventListener('change', () => {
-      // Only build previews if user is looking at Results; harmless otherwise
-      loadPhotosIntoResults();
-    });
-  }
-});
-
 /* ---------------- Compile Results ---------------- */
 function compileResults(silent = false, stayHere = true) {
-
+  const isPassenger = (window.DART_VEHICLE_TYPE === "passenger");
   // Suspension (stock/home)
   const stockFront = parseFloat(document.getElementById("suspensionFront").value);
   const stockRear  = parseFloat(document.getElementById("suspensionRear").value);
@@ -674,6 +699,37 @@ if (haveStockSusp && haveMeasuredSusp) {
   const FrontInc   = measuredFront - stockFront;   // mm
   const RearInc    = measuredRear  - stockRear;    // mm
   const OverallInc = Math.max(FrontInc, RearInc);  // use MAX, no rounding
+if (isPassenger) {
+  // Passenger logic (≤ 50 mm only)
+} else {
+  // Existing 4x4 logic (UNCHANGED)
+}
+
+  // Passenger vs 4x4 logic
+let html = "";
+
+if (isPassenger) {
+  // Passenger Car (MA/MB/MD): max 50mm overall increase
+  const compliant  = (OverallInc <= 50);
+  const labelClass = compliant ? "green" : "red";
+  const heading    = `<strong><span class="${labelClass}">Vehicle Height Increase</span></strong>`;
+
+  const detailsBlock =
+    ` – Standard vertical measurement from wheel centre to top of wheel arch:<br>` +
+    `• Front: ${measuredFront} mm (standard: ${stockFront} mm; increase: ${FrontInc} mm)<br>` +
+    `• Rear: ${measuredRear}  mm (standard: ${stockRear} mm; increase: ${RearInc}  mm)`;
+
+  if (compliant) {
+    html = `${heading} – This vehicle’s suspension/body height increase of <strong>${OverallInc} mm</strong> is within the passenger car allowance.`;
+  } else {
+    html =
+      `${heading}${detailsBlock}<br><br>` +
+      `This vehicle’s height increase of <strong>${OverallInc} mm</strong> exceeds the passenger car allowance of <strong>50 mm</strong>. ` +
+      `Rectify this vehicle’s height to standard, or ensure appropriate certification/approval is held.`;
+  }
+
+} else {
+  // ---- Existing 4x4 logic (UNCHANGED) ----
 
   // Detect LS10 in Home → Mod Codes (case-insensitive, word boundary)
   const modCodesRaw = (document.getElementById("modCodes")?.value || "");
@@ -693,7 +749,6 @@ if (haveStockSusp && haveMeasuredSusp) {
     `• Rear: ${measuredRear}  mm (standard: ${stockRear} mm; increase: ${RearInc}  mm)`;
 
   // Branching text
-  let html = "";
   if (OverallInc < 50) {
     html = `${heading} – This vehicle’s suspension/body height increase of <strong>${OverallInc} mm</strong> is within allowance for basic modification.`;
   } else if (OverallInc <= 125) {
@@ -714,13 +769,10 @@ if (haveStockSusp && haveMeasuredSusp) {
       `Rectify this vehicle’s height to standard, or ensure compliance with <strong>Vehicle Standards Instruction: Minor Modifications (VSIMM)</strong>, ` +
       `or have this vehicle certified to comply with <strong>Section 1, LS9 of the Queensland Code of Practice: Vehicle Modifications (QCOP)</strong>.`;
   }
+}
 
-  // Clear the old per-axle “Lift:” lines
-  if (frontDiv) { frontDiv.innerText = ""; frontDiv.className = "result"; }
-  if (rearDiv)  { rearDiv.innerText  = ""; rearDiv.className  = "result"; }
-
-  // Insert our block into #summary
-  if (summaryDiv) summaryDiv.innerHTML = `<p>${html}</p>`;
+// Insert our block into #summary
+if (summaryDiv) summaryDiv.innerHTML = `<p>${html}</p>`;
 
   // Preserve your Unequal Lift warning as an extra paragraph
   const originalRelationship = stockFront - stockRear;
@@ -831,7 +883,7 @@ if (tyreDiaAlert) {
 }
 
 
-  // Wheel Track check (≤50 mm = compliant, >50 mm = not compliant)
+  // Wheel Track check
 const stockTrackFront = parseFloat(document.getElementById("trackFront").value);
 const stockTrackRear  = parseFloat(document.getElementById("trackRear").value);
 const measTrackFront  = parseFloat(document.getElementById("measTrackFront").value);
@@ -846,20 +898,21 @@ if (trackAlertEl) {
     const diffF = measTrackFront - stockTrackFront;
     const diffR = measTrackRear  - stockTrackRear;
 
-    if (diffF > 50 || diffR > 50) {
-      // Non-compliant (>50 mm)
+    const trackLimit = isPassenger ? 25 : 50;
+
+    if (diffF > trackLimit || diffR > trackLimit) {
       trackAlertEl.innerHTML =
         `<p><strong><span style="color:red;">Wheel Track</span></strong> – Standard wheel track measurements for this vehicle are ` +
-        `${stockTrackFront} mm front and ${stockTrackRear} mm rear and must not be increased by more than 50 mm. ` +
+        `${stockTrackFront} mm front and ${stockTrackRear} mm rear and must not be increased by more than ${trackLimit} mm. ` +
         `The vehicle's wheel track measurements are front ${measTrackFront} mm and rear ${measTrackRear} mm. ` +
         `Rectify the wheel track to comply with s.4.4, LS9, QCOP.</p>`;
     } else {
-      // Compliant (≤50 mm)
       trackAlertEl.innerHTML =
-        `<p><strong><span style="color:green;">Wheel Track</span></strong> - modification within the allowable limit (less than 50 mm).</p>`;
+        `<p><strong><span style="color:green;">Wheel Track</span></strong> – modification within the allowable limit (≤ ${trackLimit} mm).</p>`;
     }
   }
 }
+
 
 
 // Inspection → Results
@@ -876,6 +929,7 @@ if (trackAlertEl) {
     }
   }
 }
+
 
 function answerSwayBar(isYes) {
   const infoEl = document.getElementById("swayBarInfo");
@@ -1264,12 +1318,41 @@ if (out2 && out2.children.length === 0 && query.trim()) {
 // DOMContentLoaded (runs after page load)
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
+    // ---- Build version (disclaimer modal) ----
+  const buildEl = document.getElementById("buildVersion");
+  if (buildEl && typeof BUILD !== "undefined") {
+    buildEl.textContent = `Build: ${BUILD}`;
+  }
     // ---- Disclaimer Check ----
   if (localStorage.getItem("dartDisclaimerAccepted") !== "true") {
     document.getElementById("disclaimerModal").style.display = "block";
     document.body.style.overflow = "hidden"; // Prevent background scroll
     return; // Halt other scripts until disclaimer accepted
   }
+ // ---- Vehicle type toggle (4x4 / Passenger) ----
+const VEH_KEY = "dartVehicleType";
+const toggle = document.getElementById("vehicleTypeToggle");
+const label  = document.getElementById("vehicleTypeLabel");
+
+function updateVehicleTypeUI() {
+  const isPassenger = toggle.checked;
+
+  label.innerHTML = isPassenger
+    ? `<strong>Passenger Car</strong> (category <strong>MA, MB</strong>)`
+    : `<strong>4x4</strong> (category <strong>NA, NB, MC</strong>)`;
+
+  window.DART_VEHICLE_TYPE = isPassenger ? "passenger" : "4x4";
+  localStorage.setItem(VEH_KEY, window.DART_VEHICLE_TYPE);
+}
+
+// Init on load
+if (toggle && label) {
+  toggle.checked = localStorage.getItem(VEH_KEY) === "passenger";
+  updateVehicleTypeUI();
+
+  toggle.addEventListener("change", updateVehicleTypeUI);
+}
+
 
   // Load pre-extracted manual text for fallback search
   // ---------- Restore last tab after returning from external browser ----------
@@ -1333,7 +1416,16 @@ document.addEventListener("DOMContentLoaded", () => {
         btn
       );
     });
-  } else {
+
+  } 
+  
+  // ---- Photos → Results live preview ----
+const photosInput = document.querySelector('#photos input[type="file"]');
+if (photosInput) {
+  photosInput.addEventListener('change', () => {
+    loadPhotosIntoResults(); // safe even if not on Results tab
+  });
+} else {
     console.warn("#searchResults not found when wiring listener");
   }
 
@@ -1585,11 +1677,5 @@ function rejectDisclaimer() {
   alert("You must accept the disclaimer to use this tool.");
   window.location.href = "https://www.qld.gov.au/transport";
 }
-// === Display build version in disclaimer ===
-document.addEventListener("DOMContentLoaded", () => {
-  const el = document.getElementById("buildVersion");
-  if (el && typeof BUILD !== "undefined") {
-    el.textContent = `Build version: ${BUILD}`;
-  }
-});
+
 
